@@ -11,7 +11,7 @@
 	],
 	"activationEvents": [
 		"onCommand:diplomat-host.helloWorld",
-		"onLanguage:json"
+		"onLanguage:systemverilog"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -25,34 +25,56 @@
 				"title": "Test diplomat connexion"
 			},
 			{
-				"command": "countDownBlocking",
-				"title": "Count down 10 seconds [Blocking]"
-			  },
-			  {
-				"command": "countDownNonBlocking",
-				"title": "Count down 10 seconds [Non Blocking]"
-			  },
-			  {
-				"command": "registerCompletions",
-				"title": "Register completions"
-			  },
-			  {
-				"command": "showConfigurationAsync",
-				"title": "Show Json Example Configuration [Async]"
-			  },
-			  {
-				"command": "showConfigurationCallback",
-				"title": "Show Json Example Configuration [Callback]"
-			  },
-			  {
-				"command": "showConfigurationThread",
-				"title": "Show Json Example Configuration [Thread]"
-			  },
-			  {
-				"command": "unregisterCompletions",
-				"title": "Unregister completions"
-			  }
-		]
+				"command": "diplomat-server.get-configuration",
+				"title": "Diplomat: Update server configuration"
+			},
+			{
+				"command": "diplomat-server.full-index",
+				"title": "Diplomat: Reindex"
+			},
+			{
+				"command": "indexWorkspace",
+				"title": "Index the Workspace"
+			}
+		],
+		"languages": [
+			{
+				"id": "systemverilog",
+				"aliases": [
+					"System Verilog",
+					"systemverilog"
+				],
+				"extensions": [
+					".sv",
+					".SV"
+				],
+				"configuration": "./configs/systemverilog.configuration.json"
+			}
+		],
+		"configuration": {
+			"title": "Diplomat Server",
+			"properties": {
+				"diplomatServer.backend.verilog": {
+					"scope": "resource",
+					"description": "Verilog backend name",
+					"type": "string",
+					"default": ""
+				},
+				"diplomatServer.backend.systemVerilog": {
+					"scope": "resource",
+					"description": "System Verilog backend name",
+					"type": "string",
+					"default": ""
+				},
+				"diplomatServer.indexFilePath": {
+					"scope": "resource",
+					"description": "Absolute file path for the indexer json file",
+					"type": "string",
+					"default": ""
+				}
+			}
+		}
+		
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

@@ -20,7 +20,7 @@
 
 import * as net from "net";
 import * as path from "path";
-import { ExtensionContext, workspace } from "vscode";
+import { ExtensionContext, workspace, commands } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 
 let client: LanguageClient;
@@ -29,10 +29,10 @@ function getClientOptions(): LanguageClientOptions {
   return {
     // Register the server for plain text documents
     documentSelector: [
-      { scheme: "file", language: "json" },
-      { scheme: "untitled", language: "json" },
+      { scheme: "file", language: "systemverilog" },
+      { scheme: "untitled", language: "systemverilog" },
     ],
-    outputChannelName: "[pygls] JsonLanguageServer",
+    outputChannelName: "[pygls] SystemVerilog Language Server",
     synchronize: {
       // Notify the server about file changes to '.clientrc files contain in the workspace
       fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
@@ -91,6 +91,7 @@ export function activateLspClient(context: ExtensionContext) {
   }
   */
   context.subscriptions.push(client.start());
+  commands.executeCommand("diplomat-server.get-configuration");
 }
 
 export function deactivate(): Thenable<void> {

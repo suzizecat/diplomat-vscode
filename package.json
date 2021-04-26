@@ -33,8 +33,12 @@
 				"title": "Diplomat: Reindex"
 			},
 			{
-				"command": "indexWorkspace",
-				"title": "Index the Workspace"
+				"command": "diplomat-server.reorder-files",
+				"title": "Diplomat: Reorder"
+			},
+			{
+				"command": "diplomat-server.reindex",
+				"title": "Diplomat: Index the Workspace"
 			}
 		],
 		"languages": [
@@ -68,9 +72,21 @@
 				},
 				"diplomatServer.indexFilePath": {
 					"scope": "resource",
-					"description": "Absolute file path for the indexer json file",
+					"description": "File path for the indexer json file",
 					"type": "string",
 					"default": ""
+				},
+				"diplomatServer.fileListPath": {
+					"scope": "resource",
+					"description": "File path for the indexer filelist",
+					"type": "string",
+					"default": "./filelist.flst"
+				},
+				"diplomatServer.usePrebuiltIndex": {
+					"scope": "resource",
+					"description": "Directly use a JSON file specified in @indexFilePath and don't actually run the indexer",
+					"type": "boolean",
+					"default": false
 				}
 			}
 		}

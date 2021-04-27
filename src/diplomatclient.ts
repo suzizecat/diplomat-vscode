@@ -20,7 +20,7 @@
 
 import * as net from "net";
 import * as path from "path";
-import { ExtensionContext, workspace, commands } from "vscode";
+import { ExtensionContext, workspace, commands, window } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 
 let client: LanguageClient;
@@ -32,7 +32,7 @@ function getClientOptions(): LanguageClientOptions {
       { scheme: "file", language: "systemverilog" },
       { scheme: "untitled", language: "systemverilog" },
     ],
-    outputChannelName: "[pygls] SystemVerilog Language Server",
+    outputChannelName: "[diplomat] Server",
     synchronize: {
       // Notify the server about file changes to '.clientrc files contain in the workspace
       fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
@@ -73,23 +73,30 @@ function startLangServer(
 }
 
 export function activateLspClient(context: ExtensionContext) {
-  client = startLangServerTCP(8080);
-  /*
-  if (isStartedInDebugMode()) {
+  if ( workspace.getConfiguration("diplomatServer.server").get<boolean>("useTCP")) {
     // Development - Run the server manually
-    
+    console.log("Start the server in TCP mode...");
+    client = startLangServerTCP(8080);
   } else {
+    console.log("Start the server in IO mode...");
     // Production - Client is going to run the server (for use within `.vsix` package)
-    const cwd = path.join(__dirname, "..", "..");
-    const pythonPath = workspace.getConfiguration("python").get<string>("pythonPath");
+    const python = workspace.getConfiguration("diplomatServer").get<string>("pythonCommand");
+    const servercommand = workspace.getConfiguration("diplomatServer").get<string>("serverCommand");
 
-    if (!pythonPath) {
-      throw new Error("`python.pythonPath` is not set");
+    if (!python) {
+      throw new Error("`diplomatServer.pythonCommand` is not set"); 
+    }
+    if (!servercommand) {
+      throw new Error("`diplomatServer.serverCommand` is not set");
     }
 
-    client = startLangServer(pythonPath, ["-m", "server"], cwd);
+    console.log("    Command is " + python + " " + servercommand);
+    const args = servercommand.split(" ");
+    console.log("Starting through " + python, "'" + args.join("' '") + "'");
+    client = startLangServer(python, args, args[0]);
   }
-  */
+
+
   context.subscriptions.push(client.start());
   commands.executeCommand("diplomat-server.get-configuration");
 }

@@ -2,9 +2,11 @@
 	"name": "diplomat-host",
 	"displayName": "diplomat-host",
 	"description": "",
+	"publisher": "jfaucher",
 	"version": "0.0.1",
+	"repository": {},
 	"engines": {
-		"vscode": "^1.54.0"
+		"vscode": "^1.48.1"
 	},
 	"categories": [
 		"Other"
@@ -21,7 +23,7 @@
 				"title": "Hello World"
 			},
 			{
-				"command":"diplomat-host.testserver",
+				"command": "diplomat-host.testserver",
 				"title": "Test diplomat connexion"
 			},
 			{
@@ -58,15 +60,9 @@
 		"configuration": {
 			"title": "Diplomat Server",
 			"properties": {
-				"diplomatServer.backend.verilog": {
+				"diplomatServer.backend.veribleInstallPath": {
 					"scope": "resource",
-					"description": "Verilog backend name",
-					"type": "string",
-					"default": ""
-				},
-				"diplomatServer.backend.systemVerilog": {
-					"scope": "resource",
-					"description": "System Verilog backend name",
+					"description": "Verible install path",
 					"type": "string",
 					"default": ""
 				},
@@ -87,10 +83,25 @@
 					"description": "Directly use a JSON file specified in @indexFilePath and don't actually run the indexer",
 					"type": "boolean",
 					"default": false
+				},
+				"diplomatServer.serverCommand": {
+					"description": "Server command",
+					"type": "string",
+					"default": ""
+				},
+				"diplomatServer.server.useTCP": {
+					"description": "Use TCP connection to an already started LS",
+					"type": "boolean",
+					"default": false
+				},
+
+				"diplomatServer.pythonCommand": {
+					"description": "Python command",
+					"type": "string",
+					"default": "python3"
 				}
 			}
 		}
-		
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -101,19 +112,17 @@
 		"test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.54.0",
+		"@types/vscode": "^1.48.1",
 		"@types/glob": "^7.1.3",
-		"@types/mocha": "^8.0.4",
 		"@types/node": "^12.11.7",
 		"eslint": "^7.19.0",
 		"@typescript-eslint/eslint-plugin": "^4.14.1",
 		"@typescript-eslint/parser": "^4.14.1",
 		"glob": "^7.1.6",
-		"mocha": "^8.2.1",
 		"typescript": "^4.1.3",
 		"vscode-test": "^1.5.0"
 	},
 	"dependencies": {
-		"vscode-languageclient": "^7.0.0"
+		"vscode-languageclient": "7.0.0-next.6"
 	}
 }

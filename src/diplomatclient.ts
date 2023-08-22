@@ -20,7 +20,7 @@
 
 import * as net from "net";
 import * as path from "path";
-import { ExtensionContext, workspace, commands, window } from "vscode";
+import { ExtensionContext, workspace, commands, window, QuickPickItem, QuickPickItemKind, TextEditor } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 
 let client: LanguageClient;
@@ -96,11 +96,97 @@ export function activateLspClient(context: ExtensionContext) {
     client = startLangServer(python, args, args[0]);
   }
 
-
-  context.subscriptions.push(client.start());
-  commands.executeCommand("diplomat-server.get-configuration");
+  client.start();
+  context.subscriptions.push(client);
+  //client.start();
+  //commands.executeCommand("diplomat-server.get-configuration");
 }
 
+
+class ModuleItem implements QuickPickItem {
+
+  constructor(public label: string, public description : string) {}
+}
+
+type ModuleDesc =  {file: string, name: string};
+type ModuleHead = {
+  module:      string,
+  parameters : Array<{default : string, name: string, type:string}>,
+  ports :      Array<{kind:string,name:string,type:string,size:string,direction:string,is_interface:boolean,modport:string}>
+};
+
+export async function showInstanciate() {
+	
+  //const avail_modules : JSON = JSON.parse();
+  let availModules = await commands.executeCommand<Array< ModuleDesc>>("diplomat-server.get-modules");
+  console.log("Server modules : " + availModules.toString());
+  
+  let items : Array<ModuleItem> = [];
+
+  for(let mod of availModules)
+  {
+    items.push(new ModuleItem(mod.name, mod.file));
+  }
+
+	const result = await window.showQuickPick(items, {
+		placeHolder: 'Module to instanciate'
+	});
+
+  if(result !== undefined)
+  {
+    let moduleHead = await commands.executeCommand<ModuleHead>("diplomat-server.get-module-bbox",{file:result.description, module:result.label});
+    window.showInformationMessage(`Got informations for module ${moduleHead.module}`);
+    let toInsert = `${moduleHead.module} `;
+    if( moduleHead.parameters.length > 0)
+    {
+      toInsert += " #(\n\t";
+      for(let param of moduleHead.parameters)
+      {
+        toInsert += `.${param.name}(`;
+        if(param.default !== undefined)
+        {
+          toInsert += `${param.default}`;
+        }
+        else
+        {
+          toInsert += `${param.name}`;
+        }
+        
+        toInsert += ")";
+
+        if(param !== moduleHead.parameters.at(-1))
+        {
+          toInsert += ",";
+        }
+        toInsert += "\n";
+      }
+      toInsert += ") ";
+    }
+    toInsert += `u_${moduleHead.module} (\n\t`;
+
+    for(let port of moduleHead.ports)
+    {
+      toInsert += `.${port.name}( ${port.name} )`;
+      if(port !== moduleHead.ports.at(-1))
+      {
+        toInsert += ",\n\t";
+      }
+    }
+
+    toInsert += `\n);`;
+    if(window.activeTextEditor !== undefined)
+    {
+      const textEditor : TextEditor =  window.activeTextEditor;
+      textEditor.edit((builder) => {
+        builder.insert(textEditor.selection.start,toInsert);
+      });
+    }
+  }
+}
+
+
+
 export function deactivate(): Thenable<void> {
+  console.log("Deactivate the LSP");
   return client ? client.stop() : Promise.resolve();
 }

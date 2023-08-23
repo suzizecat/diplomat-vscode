@@ -35,10 +35,6 @@
 				"title": "Get a list of available modules"
 			},
 			{
-				"command": "diplomat-server.get-module-bbox",
-				"title": "Instanciate module"
-			},
-			{
 				"command": "diplomat-server.get-configuration",
 				"title": "Diplomat: Update server configuration"
 			},

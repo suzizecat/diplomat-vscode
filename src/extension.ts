@@ -28,25 +28,17 @@ export function activate(context: ExtensionContext) {
 	}));
 
 	context.subscriptions.push(commands.registerCommand('diplomat-host.instanciate', async () => {
-		const options: { [key: string]: (context: ExtensionContext) => Promise<void> } = {
-			showQuickPick,
-			showInstanciate,
-			showInputBox,
-			multiStepInput,
-			quickOpen,
-		};
-		const quickPick = window.createQuickPick();
-		quickPick.items = Object.keys(options).map(label => ({ label }));
-		quickPick.onDidChangeSelection(selection => {
-			if (selection[0]) {
-				options[selection[0].label](context)
-					.catch(console.error);
-			}
-		});
-		quickPick.onDidHide(() => quickPick.dispose());
-		quickPick.show();
+		showInstanciate();
 	}));
 }
+
+/*
+			{
+				"command": "diplomat-server.get-module-bbox",
+				"title": "Instanciate module"
+			},
+			*/
+
 
 // this method is called when your extension is deactivated
 export function deactivate() {}

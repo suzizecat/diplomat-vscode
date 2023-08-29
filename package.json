@@ -3,10 +3,10 @@
 	"displayName": "diplomat-host",
 	"description": "",
 	"publisher": "jfaucher",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"repository": {},
 	"engines": {
-		"vscode": "^1.48.1"
+		"vscode": "^1.81.0"
 	},
 	"categories": [
 		"Other"
@@ -17,10 +17,28 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"menus": {
+			"explorer/context": [
+				{
+					"command":"diplomat-server.ignore",
+					"group": "2_workspace"
+				}
+			],
+			"commandPalette": [
+				{
+					"command":"diplomat-server.ignore",
+					"when": "never"
+				}
+			]
+		},
 		"commands": [
 			{
 				"command": "diplomat-host.helloWorld",
 				"title": "Hello World"
+			},
+			{
+				"command":"diplomat-server.ignore",
+				"title":"Ignore path for Diplomat LSP"
 			},
 			{
 				"command": "diplomat-host.testserver",
@@ -118,7 +136,8 @@
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js"
+		"test": "node ./out/test/runTest.js",
+		"publish": "vsce package"
 	},
 	"devDependencies": {
 		"@types/vscode": "^1.81.0",

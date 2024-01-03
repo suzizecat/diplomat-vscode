@@ -112,7 +112,7 @@ type ModuleDesc =  {file: string, name: string};
 type ModuleHead = {
   module:      string,
   parameters : Array<{default : string, name: string, type:string}>,
-  ports :      Array<{kind:string,name:string,type:string,size:string,direction:string,is_interface:boolean,modport:string}>
+  ports :      Array<{kind:string,name:string,type:string,size:string,direction:string,is_interface:boolean,modport:string,comment:string}>
 };
 
 export async function showInstanciate() {
@@ -169,7 +169,11 @@ export async function showInstanciate() {
       toInsert += `.${port.name}( ${port.name} )`;
       if(port !== moduleHead.ports.at(-1))
       {
-        toInsert += ",\n\t";
+        toInsert += `, ${port.comment}\n\t`;
+      }
+      else
+      {
+        toInsert += `  ${port.comment}`;
       }
     }
 

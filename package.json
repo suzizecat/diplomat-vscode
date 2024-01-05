@@ -65,6 +65,10 @@
 				"title": "Diplomat: Reindex"
 			},
 			{
+				"command": "diplomat-server.index-dump",
+				"title": "Diplomat: Dump index"
+			},
+			{
 				"command": "diplomat-server.reorder-files",
 				"title": "Diplomat: Reorder"
 			},

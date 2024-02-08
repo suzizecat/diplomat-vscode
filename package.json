@@ -93,6 +93,13 @@
 				"configuration": "./configs/systemverilog.configuration.json"
 			}
 		],
+		"grammars": [
+            {
+                "language": "systemverilog",
+                "scopeName": "source.systemverilog",
+                "path": "./syntaxes/systemverilog.tmLanguage.json"
+            }
+		],
 		"configuration": {
 			"title": "Diplomat Server",
 			"properties": {
@@ -126,27 +133,38 @@
 					"type": "boolean",
 					"default": false
 				},
-				"diplomatServer.serverCommand": {
-					"description": "Server command",
-					"type": "string",
-					"default": ""
+				"diplomatServer.serverArgs": {
+					"description": "Server arguments",
+					"type": "array",
+					"items": {
+						"type":"string"
+					}
+				},
+				"diplomatServer.index.validExtensions": {
+					"description": "Valid systemverilog extensions for indexing",
+					"type": "array",
+					"items": {
+						"type":"string"
+					},
+					"default": [".v",".sv",".svh"]
 				},
 				"diplomatServer.server.useTCP": {
 					"description": "Use TCP connection to an already started LS",
 					"type": "boolean",
 					"default": false
 				},
-				"diplomatServer.pythonCommand": {
-					"description": "Python command",
+				"diplomatServer.serverPath": {
+					"description": "Diplomat LSP command",
 					"type": "string",
-					"default": "python3"
+					"default": "slang-lsp"
 				}
 			}
 		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
-		"compile": "tsc -p ./",
+		"yj": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json",
+		"compile": "npm run yj && tsc -p ./",
 		"watch": "tsc -watch -p ./",
 		"pretest": "npm run compile && npm run lint",
 		"lint": "eslint src --ext ts",
@@ -161,6 +179,7 @@
 		"@typescript-eslint/parser": "^6.4.0",
 		"@vscode/test-electron": "^2.3.4",
 		"eslint": "^8.47.0",
+		"js-yaml": "^4.1.0",
 		"glob": "^10.3.3",
 		"typescript": "^5.3.2"
 	},

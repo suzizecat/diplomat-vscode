@@ -21,7 +21,7 @@
 import * as net from "net";
 import * as path from "path";
 import { ExtensionContext, workspace, commands, window, QuickPickItem, QuickPickItemKind, TextEditor } from "vscode";
-import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
+import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
 
 let client: LanguageClient;
 
@@ -64,9 +64,10 @@ function startLangServer(
   command: string, args: string[], cwd: string,
 ): LanguageClient {
   const serverOptions: ServerOptions = {
-    args,
-    command,
-    options: { cwd },
+    command:command,
+    args:args,
+    //transport:TransportKind.stdio,
+    //options: { cwd },
   };
 
   return new LanguageClient(command, serverOptions, getClientOptions());
@@ -80,20 +81,19 @@ export function activateLspClient(context: ExtensionContext) {
   } else {
     console.log("Start the server in IO mode...");
     // Production - Client is going to run the server (for use within `.vsix` package)
-    const python = workspace.getConfiguration("diplomatServer").get<string>("pythonCommand");
-    const servercommand = workspace.getConfiguration("diplomatServer").get<string>("serverCommand");
+    const serverExecutable = workspace.getConfiguration("diplomatServer").get<string>("serverPath");
+    const serverArgs = workspace.getConfiguration("diplomatServer").get<Array<string>>("serverArgs");
 
-    if (!python) {
-      throw new Error("`diplomatServer.pythonCommand` is not set"); 
+    if (!serverExecutable) {
+      throw new Error("`diplomatServer.serverPath` is not set"); 
     }
-    if (!servercommand) {
-      throw new Error("`diplomatServer.serverCommand` is not set");
+    if (serverArgs === undefined) {
+      throw new Error("`diplomatServer.serverArgs` is not set");
     }
 
-    console.log("    Command is " + python + " " + servercommand);
-    const args = servercommand.split(" ");
-    console.log("Starting through " + python, "'" + args.join("' '") + "'");
-    client = startLangServer(python, args, args[0]);
+    console.log("    Command is " + serverExecutable + " " + serverArgs);
+    console.log("Starting through " + serverExecutable, "'" + serverArgs.join("' '") + "'");
+    client = startLangServer(serverExecutable, serverArgs, ".");
   }
 
   client.start();

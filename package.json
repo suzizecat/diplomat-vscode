@@ -3,7 +3,7 @@
 	"displayName": "diplomat-host",
 	"description": "",
 	"publisher": "jfaucher",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"repository": {},
 	"engines": {
 		"vscode": "^1.81.0"
@@ -22,11 +22,19 @@
 				{
 					"command": "diplomat-server.ignore",
 					"group": "2_workspace"
+				},
+				{
+					"command": "diplomat-server.set-top",
+					"group": "2_workspace"
 				}
 			],
 			"commandPalette": [
 				{
 					"command": "diplomat-server.ignore",
+					"when": "never"
+				},
+				{
+					"command": "diplomat-server.set-top",
 					"when": "never"
 				}
 			]
@@ -39,6 +47,10 @@
 			{
 				"command": "diplomat-server.ignore",
 				"title": "Ignore path for Diplomat LSP"
+			},
+			{
+				"command": "diplomat-server.set-top",
+				"title": "Set workspace top level"
 			},
 			{
 				"command": "diplomat-server.save-config",
@@ -109,30 +121,6 @@
 					"type": "string",
 					"default": "./.diplomat.json"
 				},
-				"diplomatServer.backend.veribleInstallPath": {
-					"scope": "resource",
-					"description": "Verible install path",
-					"type": "string",
-					"default": ""
-				},
-				"diplomatServer.indexFilePath": {
-					"scope": "resource",
-					"description": "File path for the indexer json file",
-					"type": "string",
-					"default": ""
-				},
-				"diplomatServer.fileListPath": {
-					"scope": "resource",
-					"description": "File path for the indexer filelist",
-					"type": "string",
-					"default": "./filelist.flst"
-				},
-				"diplomatServer.usePrebuiltIndex": {
-					"scope": "resource",
-					"description": "Directly use a JSON file specified in @indexFilePath and don't actually run the indexer",
-					"type": "boolean",
-					"default": false
-				},
 				"diplomatServer.serverArgs": {
 					"description": "Server arguments",
 					"type": "array",
@@ -175,12 +163,8 @@
 		"@types/glob": "^8.1.0",
 		"@types/node": "^20.5.1",
 		"@types/vscode": "^1.81.0",
-		"@typescript-eslint/eslint-plugin": "^6.4.0",
-		"@typescript-eslint/parser": "^6.4.0",
 		"@vscode/test-electron": "^2.3.4",
-		"eslint": "^8.47.0",
 		"js-yaml": "^4.1.0",
-		"glob": "^10.3.3",
 		"typescript": "^5.3.2"
 	},
 	"dependencies": {

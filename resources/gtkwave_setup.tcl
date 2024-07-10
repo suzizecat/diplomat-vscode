@@ -14,5 +14,17 @@ proc tell_info { } {
     }
 }
 
+proc demo {varname args} {
+    upvar 0 $varname var
+    set signal [ string trim $var ".{}" ]
+    set val [ gtkwave::getTraceValueAtMarkerFromName $signal ]
+    puts "Selected $varname, value is $signal = $val!"
+
+}
+
+trace add variable gtkwave::cbTreeSigSelect  write "demo gtkwave::cbTreeSigSelect" 
+puts "Callback should be in place !"
+            
+
 puts "Custom init OK !"
 

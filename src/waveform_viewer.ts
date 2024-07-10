@@ -1,5 +1,6 @@
 import { spawn, ChildProcess, exec } from 'node:child_process';
-import { resolve } from 'node:path';
+import path = require('node:path');
+import { ExtensionContext } from 'vscode';
 import { integer } from 'vscode-languageclient';
 
 
@@ -8,6 +9,7 @@ abstract class BaseViewer {
     protected spawnArgs : Array<string>;
     protected executable : string
     protected validWavesExtension: Array<string>;
+    protected context: ExtensionContext;
 
     protected viewerClosed : Promise<void> = Promise.resolve();
 
@@ -15,10 +17,11 @@ abstract class BaseViewer {
 
     private periodicCalls : NodeJS.Timeout[] = []
 
-    constructor(execPath : string, execArgs : Array<string>, validWavesFiles : string[] = []) {
+    constructor(context : ExtensionContext, execPath : string, execArgs : Array<string>, validWavesFiles : string[] = []) {
         this.executable = execPath;
         this.spawnArgs = execArgs;
         this.validWavesExtension = validWavesFiles;
+        this.context = context;
     } 
 
     abstract openWave(wavefile : string) : void;
@@ -111,8 +114,13 @@ export class GTKWaveViewer extends BaseViewer {
         console.log("    GIO_MODULE_DIR.......... %s", delete execEnv.GIO_MODULE_DIR);
         console.log(`Spawning command line '${this.executable} ${arglist.join(" ")}'`);
 
-
-        
+        if (this.verboseLog) {
+            let env_dump: string = "";
+            Object.keys(execEnv).forEach(function (key) {
+                env_dump = env_dump + key + '="' + execEnv[key] + "\n";
+            });
+            console.log(`Environement is :\n${env_dump}`);
+        }
         this.viewerProcess = spawn(this.executable, arglist,{"env":execEnv});
         //this.viewerProcess = spawn("env",[],{"env":execEnv});
         //this.viewerProcess = spawn("gnome-terminal",[],{"env":execEnv});
@@ -142,20 +150,13 @@ export class GTKWaveViewer extends BaseViewer {
             });
         }
 
-        await this.sendCommand(`source /mnt/hspeed/Linux/Projets/VSCODE-Extensions/diplomat/diplomat-vscode/src/gtkwave_setup.tcl`)
 
-        this.addPeriodicCommand(() => {
-            this.sendCommand("tell_info");
-        },500)
-        // await this.sendCommand(`proc demo {varname args} {
-        //         upvar 0 $varname var
-        //         set signal [ string trim $var ".{}" ]
-        //         set val [ gtkwave::getTraceValueAtMarkerFromName $signal ]
-        //         puts "Selected $varname, value is $signal = $val!"
+        const init_path = this.context.asAbsolutePath(path.join("resources", "gtkwave_setup.tcl"));
+        await this.sendCommand(`source ${init_path}`);
 
-        //     }
-        //         trace add variable gtkwave::cbTreeSigDoubleClick write "demo gtkwave::cbTreeSigDoubleClick" 
-        //     `);
+        // this.addPeriodicCommand(() => {
+        //     this.sendCommand("tell_info");
+        // },500)
         
     }
 

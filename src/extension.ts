@@ -27,7 +27,7 @@ export function activate(context: ExtensionContext) {
 		throw new Error("`DiplomatServer.tools.GTKWave.options` is not set");
 	}
 	
-	waveViewer = new GTKWaveViewer(gtkwaveExecutable, gtkwaveOptions, [".vcd",".fst",".gtkw"]);
+	waveViewer = new GTKWaveViewer(context,gtkwaveExecutable, gtkwaveOptions, [".vcd",".fst",".gtkw"]);
 	waveViewer.verboseLog = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<boolean>("verbose",true);
 	context.subscriptions.push(waveViewer);
 	

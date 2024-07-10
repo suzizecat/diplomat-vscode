@@ -1,5 +1,6 @@
 set marker_time -1
 
+
 proc tell_info { } {
     global marker_time
 
@@ -9,10 +10,32 @@ proc tell_info { } {
         puts "I show trace : "
         foreach name [gtkwave::getDisplayedSignals] {
             set value [gtkwave::getTraceValueAtMarkerFromName $name]
-            puts   "$name = $value" 
+            set flag [gtkwave::getTraceFlagsFromName $name]
+            set selected "        "
+            if {$flag%2 == 1} {set selected "selected"}
+            puts   "$name $selected --- $value" 
         }
     }
 }
+
+set last_selected ""
+
+proc tell_selected { } {
+    global last_selected
+
+    foreach name [gtkwave::getDisplayedSignals] {
+        if {$name eq $last_selected} {continue}
+        set value [gtkwave::getTraceValueAtMarkerFromName $name]
+        set flag [gtkwave::getTraceFlagsFromName $name]
+
+        if {$flag%2 == 1} {
+            puts "Selected $name have value $value"
+            set last_selected $name
+            break
+        }
+    }
+}
+
 
 proc demo {varname args} {
     upvar 0 $varname var

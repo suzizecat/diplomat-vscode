@@ -154,9 +154,13 @@ export class GTKWaveViewer extends BaseViewer {
         const init_path = this.context.asAbsolutePath(path.join("resources", "gtkwave_setup.tcl"));
         await this.sendCommand(`source ${init_path}`);
 
-        // this.addPeriodicCommand(() => {
-        //     this.sendCommand("tell_info");
-        // },500)
+        this.addPeriodicCommand(() => {
+            this.sendCommand("tell_info");
+        },1000)
+
+        this.addPeriodicCommand(() => {
+            this.sendCommand("tell_selected");
+        },500)
         
     }
 

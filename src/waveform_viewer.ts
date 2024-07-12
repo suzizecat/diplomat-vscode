@@ -2,6 +2,11 @@ import { spawn, ChildProcess, exec } from 'node:child_process';
 import path = require('node:path');
 import { ExtensionContext } from 'vscode';
 import { integer } from 'vscode-languageclient';
+import { WaveformViewerCbArgs } from './exchange_types';
+
+
+const b64decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
+const b64encode = (str: string):string => Buffer.from(str, 'binary').toString('base64');
 
 
 abstract class BaseViewer {
@@ -15,18 +20,43 @@ abstract class BaseViewer {
 
     public verboseLog : boolean = false;
 
-    private periodicCalls : NodeJS.Timeout[] = []
+    private periodicCalls: NodeJS.Timeout[] = []
+    protected stdoutChunks: Array<string> = [];
 
-    constructor(context : ExtensionContext, execPath : string, execArgs : Array<string>, validWavesFiles : string[] = []) {
+    protected stdoutCb: (args: WaveformViewerCbArgs) => Promise<void>;
+
+    constructor(context : ExtensionContext, execPath : string, execArgs : Array<string>, stdoutCallBack : (args: WaveformViewerCbArgs) => Promise<void>, validWavesFiles : string[] = []) {
         this.executable = execPath;
         this.spawnArgs = execArgs;
         this.validWavesExtension = validWavesFiles;
         this.context = context;
+        this.stdoutCb = stdoutCallBack;
     } 
 
     abstract openWave(wavefile : string) : void;
     abstract addSignalToWave(signals : string[]) : void;
-    abstract close() : void;
+    abstract close(): void;
+    protected processStdout() {
+        
+        let command = this.stdoutChunks.join("");
+        this.stdoutChunks = [];
+
+        let cbArgs : WaveformViewerCbArgs | undefined = undefined;
+        try {
+            cbArgs = JSON.parse(command);
+        } catch (error) {
+            if (this.verboseLog) {
+                console.log("Failed to parse viewer output\n%s", command);
+            }
+        }
+
+        if (cbArgs !== undefined) {
+            this.stdoutCb(cbArgs);
+        }
+        
+
+
+    }
 
     protected async ensureClosed() {
 
@@ -142,27 +172,49 @@ export class GTKWaveViewer extends BaseViewer {
         });
         if (this.verboseLog)
         {
-            this.viewerProcess.stdout?.on('data', (data) => {
-                console.log(`stdout: ${data}`);
-            });
+            // this.viewerProcess.stdout?.on('data', (data) => {
+            //     console.log(`stdout: ${data}`);
+            // });
             this.viewerProcess.stderr?.on('data', (data) => {
                 console.log(`stderr: ${data}`);
             });
         }
 
+        this.viewerProcess.stdout?.on("data", (data) => {
+
+            let trimmed: string = data.toString().trimEnd()
+            if (this.verboseLog) {
+                console.log(`stdout: ${data}`);
+            }
+            if (trimmed.slice(-1) == '§') {
+                this.stdoutChunks.push(trimmed.slice(0, -1));
+                this.processStdout();
+                this.stdoutChunks = [];
+                
+                if (this.verboseLog) {
+                    console.log(`End of command`);
+                }
+            }
+            else {
+                this.stdoutChunks.push(data);
+            }
+        });
+
 
         const init_path = this.context.asAbsolutePath(path.join("resources", "gtkwave_setup.tcl"));
         await this.sendCommand(`source ${init_path}`);
 
-        this.addPeriodicCommand(() => {
-            this.sendCommand("tell_info");
-        },1000)
+        // this.addPeriodicCommand(() => {
+        //     this.sendCommand("tell_info");
+        // },1000)
 
         this.addPeriodicCommand(() => {
             this.sendCommand("tell_selected");
-        },500)
+        }, 500);
         
     }
+
+
 
     public async  addSignalToWave(signals: string[]): Promise<void> {
         await this.sendCommand("set signal_to_add [list]");

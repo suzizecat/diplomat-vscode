@@ -29,7 +29,7 @@ proc tell_selected { } {
         set flag [gtkwave::getTraceFlagsFromName $name]
 
         if {$flag%2 == 1} {
-            puts "Selected $name have value $value"
+            puts "{\"name\":\"select\",\"args\":\[\"$name\"\]}§"
             set last_selected $name
             break
         }
@@ -37,17 +37,18 @@ proc tell_selected { } {
 }
 
 
-proc demo {varname args} {
-    upvar 0 $varname var
-    set signal [ string trim $var ".{}" ]
-    set val [ gtkwave::getTraceValueAtMarkerFromName $signal ]
-    puts "Selected $varname, value is $signal = $val!"
+# proc demo {varname args} {
+#     upvar 0 $varname var
+#     set signal [ string trim $var ".{}" ]
+#     set val [ gtkwave::getTraceValueAtMarkerFromName $signal ]
+#     puts "Selected $varname, value is $signal = $val!"
 
-}
+# }
 
-trace add variable gtkwave::cbTreeSigSelect  write "demo gtkwave::cbTreeSigSelect" 
-puts "Callback should be in place !"
+# trace add variable gtkwave::cbTreeSigSelect  write "demo gtkwave::cbTreeSigSelect" 
+# puts "Callback should be in place !"
             
 
 puts "Custom init OK !"
 
+puts "§"

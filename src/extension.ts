@@ -9,6 +9,7 @@ import * as diplomat from './diplomatclient';
 import {showInstanciate} from './diplomatclient';
 
 import {GTKWaveViewer} from "./waveform_viewer";
+import { WaveformViewerCbArgs } from './exchange_types';
 //import * as globalvar from "./global";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -27,7 +28,13 @@ export function activate(context: ExtensionContext) {
 		throw new Error("`DiplomatServer.tools.GTKWave.options` is not set");
 	}
 	
-	waveViewer = new GTKWaveViewer(context,gtkwaveExecutable, gtkwaveOptions, [".vcd",".fst",".gtkw"]);
+
+	const forwardViewerCommands = async (args: WaveformViewerCbArgs) => {
+		console.log(`Request ${args.name} command with args ${args.args}`);
+		//await commands.executeCommand(`diplomat-server.${args.name}`, args.args);
+	}
+
+	waveViewer = new GTKWaveViewer(context,gtkwaveExecutable, gtkwaveOptions, forwardViewerCommands, [".vcd",".fst",".gtkw"]);
 	waveViewer.verboseLog = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<boolean>("verbose",true);
 	context.subscriptions.push(waveViewer);
 	
@@ -70,26 +77,9 @@ export function activate(context: ExtensionContext) {
 	console.log('Congratulations, your extension "diplomat-host" is now active!');
 }
 
-/*
-			{
-				"command": "diplomat-server.get-module-bbox",
-				"title": "Instanciate module"
-			},
-			*/
-
 
 // this method is called when your extension is deactivated
 export function deactivate() {
 	console.log('Diplomat extension is being disabled. Bye !');
 	
 }
-
-
-/*
-		"grammars": [
-			{
-				"language": "systemverilog",
-				"scopeName": "source.systemverilog",
-				"path": "./syntaxes/systemverilog.tmLanguage"
-			}],
-			*/

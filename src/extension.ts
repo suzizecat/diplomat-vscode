@@ -1,6 +1,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import { window, commands, ExtensionContext, workspace, Uri } from 'vscode';
+import { window, commands, ExtensionContext, workspace, Uri, Range, Selection } from 'vscode';
 import { showQuickPick, showInputBox } from './basicInput';
 import { multiStepInput } from './multiStepInput';
 import { quickOpen } from './quickOpen';
@@ -10,6 +10,7 @@ import {showInstanciate} from './diplomatclient';
 
 import {GTKWaveViewer} from "./waveform_viewer";
 import { WaveformViewerCbArgs } from './exchange_types';
+import { Location } from 'vscode-languageclient';
 //import * as globalvar from "./global";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -30,7 +31,43 @@ export function activate(context: ExtensionContext) {
 	
 
 	const forwardViewerCommands = async (args: WaveformViewerCbArgs) => {
+		let fcts : {
+			[key:string] : ( args : Array<any>) => Promise<void>;
+		} = {
+			"select" : async (args : Array<string>) => {
+				const result = await commands.executeCommand<{[key : string] : Location | null}>("diplomat-server.resolve-paths",...args);
+				for (let key in result)
+				{
+					const value = result[key];
+					if(value !== null)
+					{
+						console.log(`Open file ${value.uri}`);
+						workspace.openTextDocument(Uri.parse(value.uri))
+						.then(doc =>  {window.showTextDocument(doc)
+							.then(editor => {
+							
+							let position : Range = new Range(
+								value.range.start.line,
+								value.range.start.character,
+								value.range.end.line,
+								value.range.end.character);
+							editor.revealRange(position);
+							editor.selection = new Selection(value.range.start.line,
+								value.range.start.character,
+								value.range.end.line,
+								value.range.end.character);
+						})})
+						;
+					}
+				}
+			}
+		}
 		console.log(`Request ${args.name} command with args ${args.args}`);
+
+		if(fcts.hasOwnProperty(args.name))
+		{
+			await fcts[args.name](args.args);
+		}
 		//await commands.executeCommand(`diplomat-server.${args.name}`, args.args);
 	}
 

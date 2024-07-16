@@ -3,7 +3,7 @@
 	"displayName": "diplomat-host",
 	"description": "",
 	"publisher": "jfaucher",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"repository": {},
 	"engines": {
 		"vscode": "^1.81.0"
@@ -17,7 +17,33 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id":"diplomat-debug",
+					"title": "Diplomat Debug",
+					"icon": "$(symbol-class)"
+				}
+			]
+		},
+		"views": {
+			"diplomat-debug":[
+				{
+					"id":"design-hierarchy",
+					"name": "Hierarchy",
+					"icon":"$(symbol-class)",
+					"contextualTitle": "Design Hierarchy Explorer"
+				}
+			]
+		},
 		"menus": {
+			"view/title": [
+				{
+					"command": "diplomat-host.refresh-hierarchy",
+					"when": "view == design-hierarchy",
+					"group": "navigation"
+				}
+			],
 			"explorer/context": [
 				{
 					"command": "diplomat-server.ignore",
@@ -67,6 +93,11 @@
 				"title": "Hello World"
 			},
 			{
+				"command": "diplomat-host.refresh-hierarchy",
+				"title": "Diplomat: Refresh the design hierarchy",
+				"icon": "$(refresh)"
+			},
+			{
 				"command": "diplomat-server.ignore",
 				"title": "Server-Side : Ignore path for Diplomat LSP"
 			},
@@ -80,11 +111,11 @@
 			},
 			{
 				"command": "diplomat-host.force-pull-config",
-				"title": "Diplomat: Pull the configuration from the server"
+				"title": "Diplomat: Save the workspace configuration from the server"
 			},
 			{
 				"command": "diplomat-host.force-push-config",
-				"title": "Diplomat: Push the configuration to the server"
+				"title": "Diplomat: Load the workspace configuration to the server"
 			},
 			{
 				"command": "diplomat-server.pull-config",

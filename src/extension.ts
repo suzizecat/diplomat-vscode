@@ -11,6 +11,8 @@ import {showInstanciate} from './diplomatclient';
 import {GTKWaveViewer} from "./waveform_viewer";
 import { WaveformViewerCbArgs } from './exchange_types';
 import { Location } from 'vscode-languageclient';
+
+import { DesignElement, DesignHierarchyTreeProvider } from "./designExplorerPanel";
 //import * as globalvar from "./global";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -111,6 +113,23 @@ export function activate(context: ExtensionContext) {
 		diplomat.pushParameters(context);
 	}));
 	
+
+	let dr1 = new DesignElement("Root1");
+	let dr2 = new DesignElement("Root2");
+	let de1 = new DesignElement("Element1",dr1);
+	let de2 = new DesignElement("Element2",dr1);
+	let de3 = new DesignElement("Element1.1",de1);
+
+
+	let dataprovider = new DesignHierarchyTreeProvider([dr1,dr2]);
+
+	window.createTreeView("design-hierarchy",{treeDataProvider: dataprovider});
+
+	context.subscriptions.push(commands.registerCommand("diplomat-host.refresh-hierarchy", async () => {
+		dataprovider.refresh();
+	}));
+	
+
 	console.log('Congratulations, your extension "diplomat-host" is now active!');
 }
 

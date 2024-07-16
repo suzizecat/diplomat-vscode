@@ -24,13 +24,15 @@ proc tell_selected { } {
     global last_selected
 
     foreach name [gtkwave::getDisplayedSignals] {
-        if {$name eq $last_selected} {continue}
+        
         set value [gtkwave::getTraceValueAtMarkerFromName $name]
         set flag [gtkwave::getTraceFlagsFromName $name]
 
         if {$flag%2 == 1} {
-            puts "{\"name\":\"select\",\"args\":\[\"$name\"\]}§"
-            set last_selected $name
+            if {$name ne $last_selected} {
+                puts "{\"name\":\"select\",\"args\":\[\"$name\"\]}§"
+                set last_selected $name
+            }
             break
         }
     }

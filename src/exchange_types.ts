@@ -11,3 +11,9 @@ export type WaveformViewerCbArgs = {
   name: string,
   args: Array<any>
 };
+
+export type HierarchyRecord =  {
+  childs?: HierarchyRecord[],
+  def: boolean,
+  name: string
+}

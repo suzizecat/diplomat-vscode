@@ -66,10 +66,6 @@
 					"when": "never"
 				},
 				{
-					"command": "diplomat-host.ignore",
-					"when": "never"
-				},
-				{
 					"command": "diplomat-server.set-top",
 					"when": "never"
 				},
@@ -99,10 +95,6 @@
 			},
 			{
 				"command": "diplomat-server.ignore",
-				"title": "Server-Side : Ignore path for Diplomat LSP"
-			},
-			{
-				"command": "diplomat-host.ignore",
 				"title": "Ignore path for Diplomat LSP"
 			},
 			{

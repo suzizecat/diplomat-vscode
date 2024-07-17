@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { HierarchyRecord } from './exchange_types';
+import { Command } from 'vscode-languageclient';
 
 
 export class DesignElement extends vscode.TreeItem {
@@ -13,7 +14,6 @@ export class DesignElement extends vscode.TreeItem {
 		public  collapsibleState: vscode.TreeItemCollapsibleState = vscode.TreeItemCollapsibleState.None
 	  ) {
 		super(label, collapsibleState);
-		this.description = this.kind;
 
 		this.parent = parent;
 	  };
@@ -93,26 +93,43 @@ export class DesignHierarchyTreeProvider implements vscode.TreeDataProvider<Desi
 
 	public async fetchData() : Promise<DesignElement[]> {
 		console.log("Run fetch data !")
-		const rawData : HierarchyRecord[] = await vscode.commands.executeCommand<HierarchyRecord[]>("diplomat-server.get-hierarchy");
+		const rawData : HierarchyRecord[] | null = await vscode.commands.executeCommand<HierarchyRecord[] | null>("diplomat-server.get-hierarchy");
 		console.log(rawData);
 		this.roots = []
 
-		for(let elt of rawData) {
-			this.roots.push(this.elementFromRecord(elt));
+		if (rawData) {
+			for (let elt of rawData) {
+				this.roots.push(this.elementFromRecord(elt));
+			}
 		}
 
 		return Promise.resolve(this.roots);
 	}
 
 	protected elementFromRecord(rec : HierarchyRecord, parent : DesignElement | null = null) : DesignElement {
-		let ret = new DesignElement(rec.name,parent);
+		
+		
+		let ret = new DesignElement(rec.name != "" ? rec.name : rec.module , parent);
 		ret.defined = rec.def;
+		ret.description = rec.module;
 		// if(rec.def) {
 		// 	ret.iconPath = "$(file-code)"
 		// } else {
 		// 	ret.iconPath = "$(warning)"
 		// }
 		// console.log(`${parent?.hierPath} - ${rec.name}`);
+		if (rec.file) {
+			ret.tooltip = rec.file;
+			let fileUri: vscode.Uri;
+
+			try {
+				fileUri = vscode.Uri.parse(rec.file,true);
+			} catch {
+				fileUri = vscode.Uri.file(rec.file);
+			}
+			//console.log(`Request open ${rec.file}`);
+			ret.command = { command: "vscode.open", title: "open", arguments: [fileUri] };
+		}
 		if(rec.childs) {
 			for(let subrec of rec.childs) {
 				this.elementFromRecord(subrec,ret);

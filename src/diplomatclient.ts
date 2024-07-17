@@ -2,7 +2,7 @@
 
 import * as net from "net";
 import * as path from "path";
-import { ExtensionContext, workspace, commands, window, QuickPickItem, QuickPickItemKind, TextEditor, Uri } from "vscode";
+import { ExtensionContext, workspace, commands, window, QuickPickItem, QuickPickItemKind, TextEditor, Uri, FileStat } from "vscode";
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
 
 import * as extypes from "./exchange_types";
@@ -79,11 +79,12 @@ export function activateLspClient(context: ExtensionContext) {
 		console.log("Starting through " + serverExecutable, "'" + serverArgs.join("' '") + "'");
 		client = startLangServer(serverExecutable, serverArgs, ".");
 	}
-	
-	client.start();
+
 	context.subscriptions.push(client);
+	return client.start();
+	
 	//client.start();
-	pushParameters(context);
+	//pushParameters(context);
 }
 
 
@@ -207,6 +208,15 @@ export async function pullParameters(context : ExtensionContext) : Promise<void>
 		}
 	}
 	return Promise.reject("Storage URI is invalid, no workspace seems to be open.");
+}
+
+export async function openParameterFile(context: ExtensionContext): Promise<void> {
+	if (context.storageUri)	{
+		const config_path: Uri = Uri.joinPath(context.storageUri, "diplomat-settings.json");
+		workspace.fs.stat(config_path).then((_: FileStat) => {
+			return commands.executeCommand("vscode.open", config_path);
+		},() => {});
+	}
 }
 
 export function deactivate(): Thenable<void> {

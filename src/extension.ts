@@ -90,9 +90,7 @@ export function activate(context: ExtensionContext) {
 		window.showInformationMessage('Hello from diplomat-host!');
 	}));
 
-	console.log('Starting Diplomat LSP');
-	//outputchan = window.createOutputChannel("[diplomat] Client");
-	diplomat.activateLspClient(context);
+
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	
@@ -112,6 +110,11 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand("diplomat-host.force-push-config", async () => {
 		diplomat.pushParameters(context);
 	}));
+
+	context.subscriptions.push(commands.registerCommand("diplomat-host.show-config", async () => {
+		diplomat.openParameterFile(context);
+	}));
+	
 	
 
 	let dr1 = new DesignElement("Root1");
@@ -128,6 +131,12 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand("diplomat-host.refresh-hierarchy", async () => {
 		dataprovider.refresh();
 	}));
+
+	console.log('Starting Diplomat LSP');
+	//outputchan = window.createOutputChannel("[diplomat] Client");
+	diplomat.activateLspClient(context)
+		.then(() => { return diplomat.pushParameters(context) })
+		.then(() => { return dataprovider.refresh()});
 	
 
 	console.log('Congratulations, your extension "diplomat-host" is now active!');

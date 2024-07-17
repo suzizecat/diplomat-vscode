@@ -15,5 +15,7 @@ export type WaveformViewerCbArgs = {
 export type HierarchyRecord =  {
   childs?: HierarchyRecord[],
   def: boolean,
-  name: string
+  name: string,
+  module: string,
+  file?: string
 }

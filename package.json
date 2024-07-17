@@ -126,6 +126,10 @@
 				"title": "Load the configuration from the workspace to the server"
 			},
 			{
+				"command": "diplomat-host.show-config",
+				"title": "Diplomat: Open config file"
+			},
+			{
 				"command": "diplomat-host.testserver",
 				"title": "Test diplomat connexion"
 			},

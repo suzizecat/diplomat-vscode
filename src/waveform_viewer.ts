@@ -2,8 +2,11 @@ import { spawn, ChildProcess, exec } from 'node:child_process';
 import path = require('node:path');
 import { ExtensionContext } from 'vscode';
 import { integer } from 'vscode-languageclient';
-import { WaveformViewerCbArgs } from './exchange_types';
-
+import { SignalData, WaveformViewerCbArgs } from './exchange_types';
+import { EventEmitter } from 'node:stream';
+import { assertEquals } from "typia"
+import { once } from 'node:events';
+import { assert } from 'node:console';
 
 const b64decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
 const b64encode = (str: string):string => Buffer.from(str, 'binary').toString('base64');
@@ -34,23 +37,27 @@ abstract class BaseViewer {
     } 
 
     abstract openWave(wavefile : string) : void;
-    abstract addSignalToWave(signals : string[]) : void;
+    abstract addSignalToWave(signals: string[]): void;
+    abstract getSignals(signals: string[]): Promise<SignalData[]>;
     abstract close(): void;
-    protected processStdout() {
+    
+    protected forwardToCallback(data: any) {
         
         let command = this.stdoutChunks.join("");
         this.stdoutChunks = [];
 
         let cbArgs : WaveformViewerCbArgs | undefined = undefined;
         try {
-            cbArgs = JSON.parse(command);
+            cbArgs = assertEquals<WaveformViewerCbArgs>(data);
         } catch (error) {
             if (this.verboseLog) {
                 console.log("Failed to parse viewer output\n%s", command);
+                cbArgs = undefined;
             }
         }
 
         if (cbArgs !== undefined) {
+            
             this.stdoutCb(cbArgs);
         }
         
@@ -126,6 +133,41 @@ export class GTKWaveViewer extends BaseViewer {
     /**
      * openWave
      */
+    public events = new EventEmitter();
+
+    private handleStdout(data: string) {
+        let trimmed: string = data.toString().trimEnd()
+        if (this.verboseLog) {
+            console.log(`stdout: ${data}`);
+        }
+        if (trimmed.slice(-1) == '§') {
+            this.stdoutChunks.push(trimmed.slice(0, -1));
+
+            let data = this.stdoutChunks.join("");
+            this.stdoutChunks = [];
+            let catchedJson: JSON | undefined = undefined;
+            
+            try {
+                catchedJson = JSON.parse(data);
+            } catch (error) {
+                if (this.verboseLog) {
+                    console.log("Failed to parse viewer output\n%s", data);
+                }
+            }
+            
+            if(catchedJson) {
+                this.events.emit("replyReceived", data);
+            }
+
+            if (this.verboseLog) {
+                console.log(`End of command`);
+            }
+        }
+        else {
+            this.stdoutChunks.push(data);
+        }
+    }
+
     public async openWave(wavefile : string) {
         await this.ensureClosed();
         let arglist = this.spawnArgs;
@@ -180,25 +222,9 @@ export class GTKWaveViewer extends BaseViewer {
             });
         }
 
-        this.viewerProcess.stdout?.on("data", (data) => {
+        this.viewerProcess.stdout?.on("data", (data) => this.handleStdout);
 
-            let trimmed: string = data.toString().trimEnd()
-            if (this.verboseLog) {
-                console.log(`stdout: ${data}`);
-            }
-            if (trimmed.slice(-1) == '§') {
-                this.stdoutChunks.push(trimmed.slice(0, -1));
-                this.processStdout();
-                this.stdoutChunks = [];
-                
-                if (this.verboseLog) {
-                    console.log(`End of command`);
-                }
-            }
-            else {
-                this.stdoutChunks.push(data);
-            }
-        });
+
 
 
         const init_path = this.context.asAbsolutePath(path.join("resources", "gtkwave_setup.tcl"));
@@ -209,12 +235,11 @@ export class GTKWaveViewer extends BaseViewer {
         // },1000)
 
         this.addPeriodicCommand(() => {
+            this.events.once("replyReceived", this.forwardToCallback);
             this.sendCommand("tell_selected");
         }, 500);
         
     }
-
-
 
     public async  addSignalToWave(signals: string[]): Promise<void> {
         await this.sendCommand("set signal_to_add [list]");
@@ -224,6 +249,15 @@ export class GTKWaveViewer extends BaseViewer {
 
         await this.sendCommand(`gtkwave::addSignalsFromList ${signals.join(' ')}`)
         
+    }
+
+    public async getSignals(signals: string[]): Promise<SignalData[]> {
+        await this.sendCommand(`set signals_to_get { ${signals.join(" ")} }`);
+        this.sendCommand(`get_signals_values $signals_to_get`);
+
+        let result: any = await once(this.events, "replyReceived");
+
+        return assertEquals<SignalData[]>(JSON.parse(result));        
     }
 
     public close() {

@@ -18,6 +18,8 @@ proc tell_info { } {
     }
 }
 
+
+
 set last_selected ""
 
 proc tell_selected { } {
@@ -38,7 +40,33 @@ proc tell_selected { } {
     }
 }
 
+proc get_signals_values { siglist } {
+    set result_list "\["
+    set started 0 
 
+    set value 0
+    set time 0
+    foreach name $siglist {
+        puts "Processing $name"
+        lassign { value time } [gtkwave::signalChangeList $name -start_time [gtkwave::getMarker] -max 1]
+        set flag [gtkwave::getTraceFlagsFromName $name]
+
+        if { "$flag" eq "" } {
+            set flag "null"
+            set value "null"
+        } {
+            set value "\"$value\""
+        }
+
+        if { $started } { 
+            append result_list ",{\"sig\":\"$name\",\"val\":$value,\"flag\":$flag}"
+        } {
+            append result_list "{\"sig\":\"$name\",\"val\":$value,\"flag\":$flag}"
+            set started 1
+        }
+    }
+    puts "$result_list\]§"
+}
 # proc demo {varname args} {
 #     upvar 0 $varname var
 #     set signal [ string trim $var ".{}" ]

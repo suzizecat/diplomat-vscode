@@ -6,7 +6,8 @@ import { Command } from 'vscode-languageclient';
 export class DesignElement extends vscode.TreeItem {
 	private _parent : DesignElement | null = null;
 	private _childs : DesignElement[] = [];
-	public defined : boolean = true;
+	public defined: boolean = true;
+	public fileUri: vscode.Uri | null = null;
 	constructor(
 		public readonly label: string,
 		parent : DesignElement | null = null,
@@ -91,6 +92,31 @@ export class DesignHierarchyTreeProvider implements vscode.TreeDataProvider<Desi
 		}
 	}
 
+	public findElement(hierPath : string) : DesignElement | null {
+		let path = hierPath.split(".");
+		let currentLookup = this.roots;
+		let lastElt: DesignElement | null = null;
+		
+		let pathElement: string | undefined = undefined;
+		while ((pathElement = path.shift())) {
+			findLabel: {
+				for (let elt of currentLookup) {
+					if (elt.label == pathElement) {
+						lastElt = elt;
+						currentLookup = lastElt.children;
+						break findLabel;
+					}
+				}
+				// If we didn't break, return null as we have not found the element.
+				console.log(`Hierarchy lookup failed. Path is ${hierPath}, ${pathElement} not found.`);
+				return null;
+			}
+		}
+		console.log(`Hierarchy lookup of ${hierPath}.`);
+		return lastElt;
+		
+	}
+
 	public async fetchData() : Promise<DesignElement[]> {
 		console.log("Run fetch data !")
 		const rawData : HierarchyRecord[] | null = await vscode.commands.executeCommand<HierarchyRecord[] | null>("diplomat-server.get-hierarchy");
@@ -128,7 +154,8 @@ export class DesignHierarchyTreeProvider implements vscode.TreeDataProvider<Desi
 				fileUri = vscode.Uri.file(rec.file);
 			}
 			//console.log(`Request open ${rec.file}`);
-			ret.command = { command: "vscode.open", title: "open", arguments: [fileUri] };
+			ret.fileUri = fileUri
+			//ret.command = { command: "vscode.open", title: "open", arguments: [fileUri] };
 		}
 		if(rec.childs) {
 			for(let subrec of rec.childs) {

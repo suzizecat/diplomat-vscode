@@ -19,3 +19,9 @@ export type HierarchyRecord =  {
   module: string,
   file?: string
 }
+
+export type SignalData = {
+  sig: string,
+  val: string | number | null,
+  flag: number | null
+}

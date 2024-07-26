@@ -9,7 +9,7 @@ import * as diplomat from './diplomatclient';
 import {showInstanciate} from './diplomatclient';
 
 import {GTKWaveViewer} from "./waveform_viewer";
-import { WaveformViewerCbArgs } from './exchange_types';
+import { SignalData, WaveformViewerCbArgs } from './exchange_types';
 import { Location } from 'vscode-languageclient';
 
 import { DesignElement, DesignHierarchyTreeProvider } from "./designExplorerPanel";
@@ -18,7 +18,8 @@ import { DesignElement, DesignHierarchyTreeProvider } from "./designExplorerPane
 // your extension is activated the very first time the command is executed
 
 
-var waveViewer : GTKWaveViewer;
+var waveViewer: GTKWaveViewer;
+var currHierLocation: DesignElement | null = null;
 
 export function activate(context: ExtensionContext) {
 	
@@ -94,6 +95,10 @@ export function activate(context: ExtensionContext) {
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	
+	let dataprovider = new DesignHierarchyTreeProvider();
+
+	window.createTreeView("design-hierarchy",{treeDataProvider: dataprovider});
+
 	console.log('Adding some commands...');
 	context.subscriptions.push(commands.registerCommand("diplomat-host.open-waves", async (args : Uri) => {
 		console.log("Opening waveform...");
@@ -115,19 +120,26 @@ export function activate(context: ExtensionContext) {
 		diplomat.openParameterFile(context);
 	}));
 	
+	context.subscriptions.push(commands.registerCommand("diplomat-host.select-hierarchy", async (eltPath: string) => {
+		let currHierLocation = dataprovider.findElement(eltPath);
+		if (currHierLocation) {
+			commands.executeCommand("vscode.open", currHierLocation.fileUri)
+			let designPath = currHierLocation.hierPath;
+			commands.executeCommand<string[]>("displomat-server.list-symbols", designPath)
+				.then((signals) => { return waveViewer.getSignals(signals.map((s) => { return `${designPath}.${s}` })) })
+				.then((sigDataArray) => {
+					let info: string[] = [];
+					for (let elt of sigDataArray) {
+						if (elt.val) {
+							info.push(`Signal ${elt.sig} = ${elt.val}`);
+						}
+					}
+
+					console.log(`Found :\n\t${info.join("\n\t")}`);
+				})
+		}
+	}));
 	
-
-	let dr1 = new DesignElement("Root1");
-	let dr2 = new DesignElement("Root2");
-	let de1 = new DesignElement("Element1",dr1);
-	let de2 = new DesignElement("Element2",dr1);
-	let de3 = new DesignElement("Element1.1",de1);
-
-
-	let dataprovider = new DesignHierarchyTreeProvider([dr1,dr2]);
-
-	window.createTreeView("design-hierarchy",{treeDataProvider: dataprovider});
-
 	context.subscriptions.push(commands.registerCommand("diplomat-host.refresh-hierarchy", async () => {
 		dataprovider.refresh();
 	}));

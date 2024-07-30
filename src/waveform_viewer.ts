@@ -1,6 +1,6 @@
 import { spawn, ChildProcess, exec } from 'node:child_process';
 import path = require('node:path');
-import { ExtensionContext } from 'vscode';
+import { commands, ExtensionContext } from 'vscode';
 import { integer } from 'vscode-languageclient';
 import { SignalData, WaveformViewerCbArgs } from './exchange_types';
 import { EventEmitter } from 'node:stream';
@@ -73,6 +73,8 @@ abstract class BaseViewer {
     protected async ensureClosed() {
 
         this.stopAllPeriodic();
+        commands.executeCommand("diplomat-host.waves.clear-annotations");
+        
 
         if (this.viewerProcess !== null) {
 
@@ -90,7 +92,7 @@ abstract class BaseViewer {
     }
 
     private stopAllPeriodic() {
-        for (let periodicId in this.periodicCalls) {
+        for (let periodicId of this.periodicCalls) {
             clearInterval(periodicId);
         }
 
@@ -112,7 +114,7 @@ abstract class BaseViewer {
         }
     }
 
-    private async _lowLevelGetData() {
+    private async _lowLevelGetData() : Promise<string> {
         let buffer : string[] = [];
         if (this.viewerProcess && this.viewerProcess.stdout && this.viewerProcess.stdout.readable)
         {
@@ -127,7 +129,8 @@ abstract class BaseViewer {
                     {
                         data = rawData.toString("utf8");
                         trimmed = data.trimEnd();
-                        console.log(`LL Got ${data}`);
+                        // console.log(`LL Got ${data}`);
+                        console.log(`LL Got Stuff`);
                         buffer.push(trimmed.endsWith('§') ? trimmed : data);
                 }
 
@@ -312,10 +315,17 @@ export class GTKWaveViewer extends BaseViewer {
         //     this.sendCommand("tell_info");
         // },1000)
 
-        // this.addPeriodicCommand(() => {
-        //     this.events.once("replyReceived", this.forwardToCallback);
-        //     this.sendCommand("tell_selected");
-        // }, 500);
+        this.addPeriodicCommand(() => {
+           
+            this.exchangeCommand("tell_time_updated")
+                .then((result: string) => {
+                    let newtime = result.trim();
+                    if (newtime != "") {
+                        commands.executeCommand("diplomat-host.waves.refresh-annotations");
+                    }
+                });
+                
+        }, 500);
 
     }
 
@@ -333,11 +343,12 @@ export class GTKWaveViewer extends BaseViewer {
         console.log(`Request get signals from GTKWave of ${signals}`)
         await this.sendCommand(`set signals_to_get { ${signals.join(" ")} }`);
         let result: string = await this.exchangeCommand(`get_signals_values $signals_to_get`);
-        console.log(`Got ${result}`)
+        console.log(`Got values`)
         return assertEquals<SignalData[]>(JSON.parse(result));
     }
 
     public close() {
+
         if (this.viewerProcess !== null) {
             this.viewerProcess.stdin?.write("\nexit\n");
         }

@@ -1,24 +1,35 @@
 set marker_time -1
 
 
-proc tell_info { } {
+# proc tell_info { } {
+#     global marker_time
+
+#     set newtime [ gtkwave::getMarker ]
+#     if {$marker_time != $newtime } {
+#         set marker_time $newtime
+#         puts "I show trace : "
+#         foreach name [gtkwave::getDisplayedSignals] {
+#             set value [gtkwave::getTraceValueAtMarkerFromName $name]
+#             set flag [gtkwave::getTraceFlagsFromName $name]
+#             set selected "        "
+#             if {$flag%2 == 1} {set selected "selected"}
+#             puts   "$name $selected --- $value" 
+#         }
+#     }
+# }
+
+proc tell_time_updated { } {
     global marker_time
 
-    set newtime [ gtkwave::getMarker ]
+    set newtime [ gtkwave::getMarker]
     if {$marker_time != $newtime } {
         set marker_time $newtime
-        puts "I show trace : "
-        foreach name [gtkwave::getDisplayedSignals] {
-            set value [gtkwave::getTraceValueAtMarkerFromName $name]
-            set flag [gtkwave::getTraceFlagsFromName $name]
-            set selected "        "
-            if {$flag%2 == 1} {set selected "selected"}
-            puts   "$name $selected --- $value" 
-        }
+        puts $newtime
     }
+
+    # Adds space as you cannot return an empty string for the typescript management.
+    puts " §"
 }
-
-
 
 set last_selected ""
 
@@ -43,10 +54,14 @@ proc tell_selected { } {
 proc get_signals_values { siglist } {
     set result_list "\["
     set started 0 
+    
+    # Use previous deltacycle, to properly return values on edges.
+    set time_lookup [gtkwave::getMarker]
+    set time_lookup [incr time_lookup -1]
 
     foreach name $siglist {
         # puts "Processing $name"
-        lassign [gtkwave::signalChangeList $name -start_time [gtkwave::getMarker] -max 1]  dont_care val 
+        lassign [gtkwave::signalChangeList $name -start_time $time_lookup -max 1]  dont_care val 
         set flag [gtkwave::getTraceFlagsFromName $name]
 
         if { "$flag" eq "" } {

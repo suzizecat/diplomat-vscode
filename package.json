@@ -152,6 +152,10 @@
       {
         "command": "diplomat-host.open-waves",
         "title": "Open in the waveform viewer"
+      },
+      {
+        "command": "diplomat-host.waves.clear-annotations",
+        "title": "Diplomat: Clear waves annotations"
       }
     ],
     "languages": [
@@ -234,7 +238,27 @@
           "default": []
         }
       }
-    }
+    },
+    "colors": [
+      {
+        "id": "diplomathost.annotationForeground",
+        "description": "Specifies the foreground color for the annotations",
+        "defaults": {
+          "dark": "#adbec5",
+          "light": "#797a79",
+          "highContrast": "#adbec5"
+        }
+      },
+      {
+        "id": "diplomathost.annotationBackground",
+        "description": "Specifies the background color for the annotations",
+        "defaults": {
+          "dark": "#1e2c31",
+          "light": "#f4f5f4",
+          "highContrast": "#1e2c31"
+        }
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

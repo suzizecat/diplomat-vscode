@@ -1,6 +1,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import { window, commands, ExtensionContext, workspace, Uri, Range, Selection } from 'vscode';
+import { window, commands, ExtensionContext, workspace, Uri, Range, Selection, DecorationOptions } from 'vscode';
 import { showQuickPick, showInputBox } from './basicInput';
 import { multiStepInput } from './multiStepInput';
 import { quickOpen } from './quickOpen';
@@ -13,6 +13,8 @@ import { SignalData, WaveformViewerCbArgs } from './exchange_types';
 import { Location } from 'vscode-languageclient';
 
 import { DesignElement, DesignHierarchyTreeProvider } from "./designExplorerPanel";
+
+import { TextAnnotator } from './text_annotator';
 //import * as globalvar from "./global";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -25,6 +27,9 @@ export function activate(context: ExtensionContext) {
 	
 	const gtkwaveExecutable = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string>("path");
 	const gtkwaveOptions = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string[]>("options");
+
+	const annotationDecorationType = window.createTextEditorDecorationType({})
+
 	if (!gtkwaveExecutable) {
 		throw new Error("`DiplomatServer.tools.GTKWave.path` is not set"); 
 	}
@@ -72,6 +77,54 @@ export function activate(context: ExtensionContext) {
 			await fcts[args.name](args.args);
 		}
 		//await commands.executeCommand(`diplomat-server.${args.name}`, args.args);
+	}
+
+	const updateAnnotation = async () => {
+		if (currHierLocation) {
+			await commands.executeCommand("vscode.open", currHierLocation.fileUri)
+			if(waveViewer.running)
+			{
+				let designPath = currHierLocation.hierPath;
+				commands.executeCommand<string[]>("displomat-server.list-symbols", designPath)
+					.then((signals) => { return waveViewer.getSignals(signals.map((s) => { return `${designPath}.${s}` })) })
+					.then((sigDataArray) => {
+						let editor = window.activeTextEditor;
+						if (editor) {
+							var text = editor.document.getText();
+							const annotations: DecorationOptions[] = [];
+							
+							for (let elt of sigDataArray) {
+								if (elt.val) {
+									let elt_name = elt.sig.split(".").slice(-1)[0];
+									let textpos = 0;
+									let pos: number;
+									console.log(`Pushing annotations for ${elt_name}`)
+									while ((pos = text.indexOf(elt_name, textpos)) != -1)
+									{
+										console.log(`    ${elt.sig} at pos ${pos}`);
+										annotations.push(TextAnnotator.inTextAnnotationAfter(
+											`${elt.val}`,
+											new Range(editor.document.positionAt(pos), editor.document.positionAt(pos + elt_name.length))
+										));
+										
+										textpos = pos + elt_name.length;
+									}
+								}
+							}
+
+							editor.setDecorations(annotationDecorationType, annotations);
+						}
+					});
+			}
+			else
+			{
+				await commands.executeCommand("diplomat-host.waves.clear-annotations");
+			}
+		}
+		else
+		{
+			await commands.executeCommand("diplomat-host.waves.clear-annotations");
+		}
 	}
 
 	waveViewer = new GTKWaveViewer(context,gtkwaveExecutable, gtkwaveOptions, forwardViewerCommands, [".vcd",".fst",".gtkw"]);
@@ -122,27 +175,15 @@ export function activate(context: ExtensionContext) {
 	
 	context.subscriptions.push(commands.registerCommand("diplomat-host.select-hierarchy", async (eltPath: string) => {
 		console.log("Select hierarchy");
-		let currHierLocation = dataprovider.findElement(eltPath);
-		if (currHierLocation) {
-			commands.executeCommand("vscode.open", currHierLocation.fileUri)
-			if(waveViewer.running)
-			{
-				let designPath = currHierLocation.hierPath;
-				commands.executeCommand<string[]>("displomat-server.list-symbols", designPath)
-					.then((signals) => { return waveViewer.getSignals(signals.map((s) => { return `${designPath}.${s}` })) })
-					.then((sigDataArray) => {
-						let info: string[] = [];
-						for (let elt of sigDataArray) {
-							if (elt.val) {
-								info.push(`Signal ${elt.sig} = ${elt.val}`);
-							}
-						}
-
-						console.log(`Found :\n\t${info.join("\n\t")}`);
-					});
-			}
-		}
+		currHierLocation = dataprovider.findElement(eltPath);
+		await updateAnnotation();
 	}));
+
+	context.subscriptions.push(commands.registerCommand("diplomat-host.waves.refresh-annotations", async () => {
+		await updateAnnotation();
+	}));
+
+	context.subscriptions.push(commands.registerCommand("diplomat-host.waves.clear-annotations", () => {window.activeTextEditor?.setDecorations(annotationDecorationType, []);}))
 	
 	context.subscriptions.push(commands.registerCommand("diplomat-host.refresh-hierarchy", async () => {
 		dataprovider.refresh();

@@ -44,18 +44,20 @@ proc get_signals_values { siglist } {
     set result_list "\["
     set started 0 
 
-    set value 0
-    set time 0
     foreach name $siglist {
-        puts "Processing $name"
-        lassign { value time } [gtkwave::signalChangeList $name -start_time [gtkwave::getMarker] -max 1]
+        # puts "Processing $name"
+        lassign [gtkwave::signalChangeList $name -start_time [gtkwave::getMarker] -max 1]  dont_care val 
         set flag [gtkwave::getTraceFlagsFromName $name]
 
         if { "$flag" eq "" } {
             set flag "null"
-            set value "null"
+          
+        } 
+        
+        if {[info exist val]} {
+            set value "\"$val\""
         } {
-            set value "\"$value\""
+            set value "null"
         }
 
         if { $started } { 
@@ -64,6 +66,8 @@ proc get_signals_values { siglist } {
             append result_list "{\"sig\":\"$name\",\"val\":$value,\"flag\":$flag}"
             set started 1
         }
+
+        unset val
     }
     puts "$result_list\]§"
 }

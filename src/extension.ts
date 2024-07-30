@@ -121,22 +121,26 @@ export function activate(context: ExtensionContext) {
 	}));
 	
 	context.subscriptions.push(commands.registerCommand("diplomat-host.select-hierarchy", async (eltPath: string) => {
+		console.log("Select hierarchy");
 		let currHierLocation = dataprovider.findElement(eltPath);
 		if (currHierLocation) {
 			commands.executeCommand("vscode.open", currHierLocation.fileUri)
-			let designPath = currHierLocation.hierPath;
-			commands.executeCommand<string[]>("displomat-server.list-symbols", designPath)
-				.then((signals) => { return waveViewer.getSignals(signals.map((s) => { return `${designPath}.${s}` })) })
-				.then((sigDataArray) => {
-					let info: string[] = [];
-					for (let elt of sigDataArray) {
-						if (elt.val) {
-							info.push(`Signal ${elt.sig} = ${elt.val}`);
+			if(waveViewer.running)
+			{
+				let designPath = currHierLocation.hierPath;
+				commands.executeCommand<string[]>("displomat-server.list-symbols", designPath)
+					.then((signals) => { return waveViewer.getSignals(signals.map((s) => { return `${designPath}.${s}` })) })
+					.then((sigDataArray) => {
+						let info: string[] = [];
+						for (let elt of sigDataArray) {
+							if (elt.val) {
+								info.push(`Signal ${elt.sig} = ${elt.val}`);
+							}
 						}
-					}
 
-					console.log(`Found :\n\t${info.join("\n\t")}`);
-				})
+						console.log(`Found :\n\t${info.join("\n\t")}`);
+					});
+			}
 		}
 	}));
 	

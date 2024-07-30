@@ -1,257 +1,264 @@
 {
-	"name": "diplomat-host",
-	"displayName": "diplomat-host",
-	"description": "",
-	"publisher": "jfaucher",
-	"version": "0.0.5",
-	"repository": {},
-	"engines": {
-		"vscode": "^1.81.0"
-	},
-	"categories": [
-		"Other"
-	],
-	"activationEvents": [
-		"onCommand:diplomat-host.helloWorld",
-		"onLanguage:systemverilog"
-	],
-	"main": "./out/extension.js",
-	"contributes": {
-		"viewsContainers": {
-			"activitybar": [
-				{
-					"id":"diplomat-debug",
-					"title": "Diplomat Debug",
-					"icon": "$(symbol-class)"
-				}
-			]
-		},
-		"views": {
-			"diplomat-debug":[
-				{
-					"id":"design-hierarchy",
-					"name": "Hierarchy",
-					"icon":"$(symbol-class)",
-					"contextualTitle": "Design Hierarchy Explorer"
-				}
-			]
-		},
-		"menus": {
-			"view/title": [
-				{
-					"command": "diplomat-host.refresh-hierarchy",
-					"when": "view == design-hierarchy",
-					"group": "navigation"
-				}
-			],
-			"explorer/context": [
-				{
-					"command": "diplomat-server.ignore",
-					"group": "2_workspace"
-				},
-				{
-					"command": "diplomat-server.set-top",
-					"group": "2_workspace",
-					"when":"resourceExtname in diplomat-host.supportedDesignFiles"
-				},
-				{
-					"command": "diplomat-host.open-waves",
-					"group": "navigation",
-					"when":"resourceExtname in diplomat-host.supportedWavesFiles"
-				}
-			],
-			"commandPalette": [
-				{
-					"command": "diplomat-server.ignore",
-					"when": "never"
-				},
-				{
-					"command": "diplomat-server.set-top",
-					"when": "never"
-				},
-				{
-					"command": "diplomat-host.open-waves",
-					"when" : "never"
-				},
-				{
-					"command": "diplomat-server.pull-config",
-					"when": "never"
-				},
-				{
-					"command": "diplomat-server.push-config",
-					"when": "never"
-				}
-			]
-		},
-		"commands": [
-			{
-				"command": "diplomat-host.helloWorld",
-				"title": "Hello World"
-			},
-			{
-				"command": "diplomat-host.refresh-hierarchy",
-				"title": "Diplomat: Refresh the design hierarchy",
-				"icon": "$(refresh)"
-			},
-			{
-				"command": "diplomat-server.ignore",
-				"title": "Ignore path for Diplomat LSP"
-			},
-			{
-				"command": "diplomat-server.set-top",
-				"title": "Set workspace top level"
-			},
-			{
-				"command": "diplomat-host.force-pull-config",
-				"title": "Diplomat: Save the workspace configuration from the server"
-			},
-			{
-				"command": "diplomat-host.force-push-config",
-				"title": "Diplomat: Load the workspace configuration to the server"
-			},
-			{
-				"command": "diplomat-server.pull-config",
-				"title": "Save the configuration from the server"
-			},
-			{
-				"command": "diplomat-server.push-config",
-				"title": "Load the configuration from the workspace to the server"
-			},
-			{
-				"command": "diplomat-host.show-config",
-				"title": "Diplomat: Open config file"
-			},
-			{
-				"command": "diplomat-host.testserver",
-				"title": "Test diplomat connexion"
-			},
-			{
-				"command": "diplomat-host.instanciate",
-				"title": "Instanciate module"
-			},
-			{
-				"command": "diplomat-server.get-modules",
-				"title": "Get a list of available modules"
-			},
-			{
-				"command": "diplomat-server.full-index",
-				"title": "Diplomat: Reindex"
-			},
-			{
-				"command": "diplomat-server.index-dump",
-				"title": "Diplomat: Dump index"
-			},
-			{
-				"command": "diplomat-server.reorder-files",
-				"title": "Diplomat: Reorder"
-			},
-			{
-				"command": "diplomat-server.reindex",
-				"title": "Diplomat: Index the Workspace"
-			},
-			{
-				"command": "diplomat-host.open-waves",
-				"title": "Open in the waveform viewer"
-			}
-		],
-		"languages": [
-			{
-				"id": "systemverilog",
-				"aliases": [
-					"System Verilog",
-					"systemverilog"
-				],
-				"extensions": [
-					".sv",
-					".SV",
-					".svh",
-					".SVH"
-				],
-				"configuration": "./configs/systemverilog.configuration.json"
-			}
-		],
-		"grammars": [
-            {
-                "language": "systemverilog",
-                "scopeName": "source.systemverilog",
-                "path": "./syntaxes/systemverilog.tmLanguage.json"
-            }
-		],
-		"configuration": {
-			"title": "Diplomat Server",
-			"properties": {
-				"diplomatServer.server.configurationPath": {
-					"scope": "resource",
-					"description": "Path to the server configuration file",
-					"type": "string",
-					"default": "./.diplomat.json"
-				},
-				"diplomatServer.serverArgs": {
-					"description": "Server arguments",
-					"type": "array",
-					"items": {
-						"type":"string"
-					}
-				},
-				"diplomatServer.index.validExtensions": {
-					"description": "Valid systemverilog extensions for indexing",
-					"type": "array",
-					"items": {
-						"type":"string"
-					},
-					"default": [".v",".sv",".svh"]
-				},
-				"diplomatServer.server.useTCP": {
-					"description": "Use TCP connection to an already started LS",
-					"type": "boolean",
-					"default": false
-				},
-				"diplomatServer.serverPath": {
-					"description": "Diplomat LSP command",
-					"type": "string",
-					"default": "slang-lsp"
-				},
-				"diplomatServer.tools.GTKWave.path": {
-					"description": "GTKWave executable path",
-					"type": "string",
-					"default": "gtkwave"
-				},
-				"diplomatServer.tools.GTKWave.verbose": {
-					"description": "Dump GTKWave outputs to extension outputs ",
-					"type": "boolean",
-					"default": false
-				},
-				"diplomatServer.tools.GTKWave.options": {
-					"description": "Added options for GTKWave call",
-					"type": "array",
-					"items": {
-						"type":"string"
-					},
-					"default": []
-				}
-			}
-		}
-	},
-	"scripts": {
-		"vscode:prepublish": "npm run compile",
-		"yj": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json",
-		"compile": "npm run yj && tsc -p ./",
-		"watch": "tsc -watch -p ./",
-		"pretest": "npm run compile && npm run lint",
-		"lint": "eslint src --ext ts",
-		"test": "node ./out/test/runTest.js",
-		"publish": "vsce package"
-	},
-	"devDependencies": {
-		"@types/glob": "^8.1.0",
-		"@types/node": "^20.5.1",
-		"@types/vscode": "^1.81.0",
-		"@vscode/test-electron": "^2.3.4",
-		"js-yaml": "^4.1.0",
-		"typescript": "^5.3.2"
-	},
-	"dependencies": {
-		"vscode-languageclient": "8.2.0-next.0",
-		"typia": "~6.5.4"
-	}
+  "name": "diplomat-host",
+  "displayName": "diplomat-host",
+  "description": "",
+  "publisher": "jfaucher",
+  "version": "0.0.5",
+  "repository": {},
+  "engines": {
+    "vscode": "^1.81.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:diplomat-host.helloWorld",
+    "onLanguage:systemverilog"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "diplomat-debug",
+          "title": "Diplomat Debug",
+          "icon": "$(symbol-class)"
+        }
+      ]
+    },
+    "views": {
+      "diplomat-debug": [
+        {
+          "id": "design-hierarchy",
+          "name": "Hierarchy",
+          "icon": "$(symbol-class)",
+          "contextualTitle": "Design Hierarchy Explorer"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "diplomat-host.refresh-hierarchy",
+          "when": "view == design-hierarchy",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "diplomat-server.ignore",
+          "group": "2_workspace"
+        },
+        {
+          "command": "diplomat-server.set-top",
+          "group": "2_workspace",
+          "when": "resourceExtname in diplomat-host.supportedDesignFiles"
+        },
+        {
+          "command": "diplomat-host.open-waves",
+          "group": "navigation",
+          "when": "resourceExtname in diplomat-host.supportedWavesFiles"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "diplomat-server.ignore",
+          "when": "never"
+        },
+        {
+          "command": "diplomat-server.set-top",
+          "when": "never"
+        },
+        {
+          "command": "diplomat-host.open-waves",
+          "when": "never"
+        },
+        {
+          "command": "diplomat-server.pull-config",
+          "when": "never"
+        },
+        {
+          "command": "diplomat-server.push-config",
+          "when": "never"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "diplomat-host.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "diplomat-host.refresh-hierarchy",
+        "title": "Diplomat: Refresh the design hierarchy",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "diplomat-server.ignore",
+        "title": "Ignore path for Diplomat LSP"
+      },
+      {
+        "command": "diplomat-server.set-top",
+        "title": "Set workspace top level"
+      },
+      {
+        "command": "diplomat-host.force-pull-config",
+        "title": "Diplomat: Save the workspace configuration from the server"
+      },
+      {
+        "command": "diplomat-host.force-push-config",
+        "title": "Diplomat: Load the workspace configuration to the server"
+      },
+      {
+        "command": "diplomat-server.pull-config",
+        "title": "Save the configuration from the server"
+      },
+      {
+        "command": "diplomat-server.push-config",
+        "title": "Load the configuration from the workspace to the server"
+      },
+      {
+        "command": "diplomat-host.show-config",
+        "title": "Diplomat: Open config file"
+      },
+      {
+        "command": "diplomat-host.testserver",
+        "title": "Test diplomat connexion"
+      },
+      {
+        "command": "diplomat-host.instanciate",
+        "title": "Instanciate module"
+      },
+      {
+        "command": "diplomat-server.get-modules",
+        "title": "Get a list of available modules"
+      },
+      {
+        "command": "diplomat-server.full-index",
+        "title": "Diplomat: Reindex"
+      },
+      {
+        "command": "diplomat-server.index-dump",
+        "title": "Diplomat: Dump index"
+      },
+      {
+        "command": "diplomat-server.reorder-files",
+        "title": "Diplomat: Reorder"
+      },
+      {
+        "command": "diplomat-server.reindex",
+        "title": "Diplomat: Index the Workspace"
+      },
+      {
+        "command": "diplomat-host.open-waves",
+        "title": "Open in the waveform viewer"
+      }
+    ],
+    "languages": [
+      {
+        "id": "systemverilog",
+        "aliases": [
+          "System Verilog",
+          "systemverilog"
+        ],
+        "extensions": [
+          ".sv",
+          ".SV",
+          ".svh",
+          ".SVH"
+        ],
+        "configuration": "./configs/systemverilog.configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "systemverilog",
+        "scopeName": "source.systemverilog",
+        "path": "./syntaxes/systemverilog.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Diplomat Server",
+      "properties": {
+        "diplomatServer.server.configurationPath": {
+          "scope": "resource",
+          "description": "Path to the server configuration file",
+          "type": "string",
+          "default": "./.diplomat.json"
+        },
+        "diplomatServer.serverArgs": {
+          "description": "Server arguments",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "diplomatServer.index.validExtensions": {
+          "description": "Valid systemverilog extensions for indexing",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            ".v",
+            ".sv",
+            ".svh"
+          ]
+        },
+        "diplomatServer.server.useTCP": {
+          "description": "Use TCP connection to an already started LS",
+          "type": "boolean",
+          "default": false
+        },
+        "diplomatServer.serverPath": {
+          "description": "Diplomat LSP command",
+          "type": "string",
+          "default": "slang-lsp"
+        },
+        "diplomatServer.tools.GTKWave.path": {
+          "description": "GTKWave executable path",
+          "type": "string",
+          "default": "gtkwave"
+        },
+        "diplomatServer.tools.GTKWave.verbose": {
+          "description": "Dump GTKWave outputs to extension outputs ",
+          "type": "boolean",
+          "default": false
+        },
+        "diplomatServer.tools.GTKWave.options": {
+          "description": "Added options for GTKWave call",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "yj": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json",
+    "compile": "npm run yj && tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "publish": "vsce package",
+    "prepare": "ts-patch install && typia patch"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/node": "^20.5.1",
+    "@types/vscode": "^1.81.0",
+    "@vscode/test-electron": "^2.3.4",
+    "js-yaml": "^4.1.0",
+    "ts-patch": "^3.2.1",
+    "typescript": "^5.5.2"
+  },
+  "dependencies": {
+    "ts-semaphore": "1.0.0",
+    "typia": "~6.5.4",
+    "vscode-languageclient": "8.2.0-next.0"
+  }
 }

@@ -156,6 +156,7 @@ export class DesignHierarchyTreeProvider implements vscode.TreeDataProvider<Desi
 			//console.log(`Request open ${rec.file}`);
 			ret.fileUri = fileUri
 			//ret.command = { command: "vscode.open", title: "open", arguments: [fileUri] };
+			ret.command = { command: "diplomat-host.select-hierarchy", title: "Select hierarchy", arguments: [ret.hierPath] };
 		}
 		if(rec.childs) {
 			for(let subrec of rec.childs) {

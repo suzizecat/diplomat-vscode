@@ -15,6 +15,10 @@ npm run publish
 code --install-extension diplomat*.vsix
 ```
 
+## Documentation
+
+The detailed documentation will be available [here](https://suzizecat.github.io/diplomat-lsp/index.html)
+
 ## Features
 
 This extension brings support for SystemVerilog language in VSCode.

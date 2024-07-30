@@ -1,6 +1,6 @@
 import { spawn, ChildProcess, exec } from 'node:child_process';
 import path = require('node:path');
-import { commands, ExtensionContext } from 'vscode';
+import { commands, ExtensionContext, workspace } from 'vscode';
 import { integer } from 'vscode-languageclient';
 import { SignalData, WaveformViewerCbArgs } from './exchange_types';
 import { EventEmitter } from 'node:stream';
@@ -254,7 +254,10 @@ export class GTKWaveViewer extends BaseViewer {
 
     public async openWave(wavefile: string) {
         await this.ensureClosed();
-        let arglist = this.spawnArgs;
+        let arglist = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string[]>("options");
+        
+        if(! arglist)
+            arglist = [];
 
         if (!arglist.includes("-W")) {
             arglist.push("-W");
@@ -270,13 +273,13 @@ export class GTKWaveViewer extends BaseViewer {
         console.log("    GIO_MODULE_DIR.......... %s", delete execEnv.GIO_MODULE_DIR);
         console.log(`Spawning command line '${this.executable} ${arglist.join(" ")}'`);
 
-        if (this.verboseLog) {
-            let env_dump: string = "";
-            Object.keys(execEnv).forEach(function (key) {
-                env_dump = env_dump + key + '="' + execEnv[key] + "\n";
-            });
-            console.log(`Environement is :\n${env_dump}`);
-        }
+        // if (this.verboseLog) {
+        //     let env_dump: string = "";
+        //     Object.keys(execEnv).forEach(function (key) {
+        //         env_dump = env_dump + key + '="' + execEnv[key] + "\n";
+        //     });
+        //     console.log(`Environement is :\n${env_dump}`);
+        // }
         this.viewerProcess = spawn(this.executable, arglist, { "env": execEnv });
         //this.viewerProcess = spawn("env",[],{"env":execEnv});
         //this.viewerProcess = spawn("gnome-terminal",[],{"env":execEnv});

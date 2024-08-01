@@ -20,7 +20,7 @@ jobs:
     - name: Build
       run: npm run publish
     - name: Rename file
-      run: mv diplomat-host-*.vsix diplomat-host-${{ github.ref_name }}.vsix
+      run: if [ ! -e diplomat-host-${{ github.ref_name }}.vsix ]; then mv diplomat-host-*.vsix diplomat-host-${{ github.ref_name }}.vsix ; else echo "Name was already correct" ; fi
     - name: Upload artifacts - main app
       uses: actions/upload-artifact@v4
       if: ${{ success() }}

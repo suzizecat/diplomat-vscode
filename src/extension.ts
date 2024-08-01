@@ -9,7 +9,7 @@ import * as diplomat from './diplomatclient';
 import {showInstanciate} from './diplomatclient';
 
 import {GTKWaveViewer} from "./waveform_viewer";
-import { SignalData, WaveformViewerCbArgs } from './exchange_types';
+import { FileSymbolsLookupResult, SignalData, WaveformViewerCbArgs } from './exchange_types';
 import { Location } from 'vscode-languageclient';
 
 import { DesignElement, DesignHierarchyTreeProvider } from "./designExplorerPanel";
@@ -85,8 +85,12 @@ export function activate(context: ExtensionContext) {
 			if(waveViewer.running)
 			{
 				let designPath = currHierLocation.hierPath;
-				commands.executeCommand<string[]>("displomat-server.list-symbols", designPath)
-					.then((signals) => { return waveViewer.getSignals(signals.map((s) => { return `${designPath}.${s}` })) })
+				var fileLookup: FileSymbolsLookupResult;
+				commands.executeCommand<FileSymbolsLookupResult>("displomat-server.list-symbols", designPath)
+					.then((signals) => {
+						fileLookup = signals;
+						return waveViewer.getSignals(Object.keys(signals).map((s) => { return `${designPath}.${s}` }));
+					})
 					.then((sigDataArray) => {
 						let editor = window.activeTextEditor;
 						if (editor) {
@@ -96,18 +100,14 @@ export function activate(context: ExtensionContext) {
 							for (let elt of sigDataArray) {
 								if (elt.val) {
 									let elt_name = elt.sig.split(".").slice(-1)[0];
-									let textpos = 0;
-									let pos: number;
+									
 									console.log(`Pushing annotations for ${elt_name}`)
-									while ((pos = text.indexOf(elt_name, textpos)) != -1)
+									for (let range  of fileLookup[elt_name])
 									{
-										console.log(`    ${elt.sig} at pos ${pos}`);
 										annotations.push(TextAnnotator.inTextAnnotationAfter(
 											`${elt.val}`,
-											new Range(editor.document.positionAt(pos), editor.document.positionAt(pos + elt_name.length))
+											range as Range
 										));
-										
-										textpos = pos + elt_name.length;
 									}
 								}
 							}

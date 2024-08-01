@@ -1,7 +1,9 @@
 # Changelog
-## First release
 
-- Setup of the CI/CD 
+Considered as the first working distributed version.
+
+- Setup of the CI/CD
+- Properly lookup symbols when using inline annotation.
 
 # 0.0.5 - Unreleased
 Next version will be 0.0.6

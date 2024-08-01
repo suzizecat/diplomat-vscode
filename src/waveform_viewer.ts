@@ -130,14 +130,14 @@ abstract class BaseViewer {
                         data = rawData.toString("utf8");
                         trimmed = data.trimEnd();
                         // console.log(`LL Got ${data}`);
-                        console.log(`LL Got Stuff`);
+                        // console.log(`LL Got Stuff`);
                         buffer.push(trimmed.endsWith('§') ? trimmed : data);
                 }
 
                 if(rawData === null || ! trimmed.endsWith('§'))
                     rawData = (await once(this.viewerProcess.stdout,"data"))[0];
-                else
-                    console.log("Clean exit of LL get");
+                // else
+                //     console.log("Clean exit of LL get");
 
             } 
         }
@@ -171,19 +171,7 @@ abstract class BaseViewer {
         
     }
 
-    /*
-        protected sendCommand(cmd : string) {
-            if(this.viewerProcess !== null) {
-                if(!this.viewerProcess.stdin?.write(cmd + "\n")) {
-                    return new Promise((resolve) => {
-                        this.viewerProcess?.stdin?.once("drain",resolve);
-                    });
-                }
-            }
-            return Promise.resolve();
-        }
-    */
-
+ 
     public get running(): boolean {
         return this.viewerProcess !== null;
     }
@@ -209,48 +197,6 @@ export class GTKWaveViewer extends BaseViewer {
     /**
      * openWave
      */
-
-   
-    // private handleStdout(data: string) {
-    //     let trimmed: string = data.toString().trimEnd()
-    //     if (this.verboseLog) {
-    //         console.log(`stdout: ${data}`);
-    //     }
-    //     if (trimmed.slice(-1) == '§') {
-    //         console.log("Something is clean !");
-
-    //         console.log(`Heya !, ${this.stdoutChunks}`);
-    //         try {
-    //             this.stdoutChunks.push(trimmed.slice(0, -1));
-    //         } catch (error) {
-    //             console.error(`Dafok ? ${error}`);
-    //         }
-    //         console.log("Heya !");
-
-    //         let data = this.stdoutChunks.join("");
-    //         this.stdoutChunks = [];
-    //         let catchedJson: JSON | undefined = undefined;
-
-    //         try {
-    //             catchedJson = JSON.parse(data);
-    //         } catch (error) {
-    //             if (this.verboseLog) {
-    //                 console.log("Failed to parse viewer output\n%s", data);
-    //             }
-    //         }
-
-    //         if (catchedJson) {
-    //             this.events.emit("replyReceived", data);
-    //         }
-
-    //         if (this.verboseLog) {
-    //             console.log(`End of command`);
-    //         }
-    //     }
-    //     else {
-    //         this.stdoutChunks.push(data);
-    //     }
-    // }
 
     public async openWave(wavefile: string) {
         await this.ensureClosed();
@@ -281,8 +227,6 @@ export class GTKWaveViewer extends BaseViewer {
         //     console.log(`Environement is :\n${env_dump}`);
         // }
         this.viewerProcess = spawn(this.executable, arglist, { "env": execEnv });
-        //this.viewerProcess = spawn("env",[],{"env":execEnv});
-        //this.viewerProcess = spawn("gnome-terminal",[],{"env":execEnv});
 
         this.viewerClosed = new Promise((resolve) => {
             this.viewerProcess?.on("close", resolve);
@@ -305,18 +249,10 @@ export class GTKWaveViewer extends BaseViewer {
             });
         }
         
-        //this.viewerProcess.stdout?.on("data", this.handleStdout);
-
-
-
 
         const init_path = this.context.asAbsolutePath(path.join("resources", "gtkwave_setup.tcl"));
         
         await this.exchangeCommand(`source ${init_path}`);
-
-        // this.addPeriodicCommand(() => {
-        //     this.sendCommand("tell_info");
-        // },1000)
 
         this.addPeriodicCommand(() => {
            

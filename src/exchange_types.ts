@@ -1,5 +1,7 @@
 "use strict";
 
+import * as lsp from "vscode-languageclient";
+
 
 export type DiplomatConfig = {
     workspaceDirs: Array<string>,
@@ -24,4 +26,8 @@ export type SignalData = {
   sig: string,
   val: string | number | null,
   flag: number | null
+}
+
+export type FileSymbolsLookupResult = {
+  [key:string] : lsp.Range[];
 }

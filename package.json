@@ -276,6 +276,7 @@
     "@types/node": "^20.5.1",
     "@types/vscode": "^1.81.0",
     "@vscode/test-electron": "^2.3.4",
+    "@vscode/vsce": "~2.22.0",
     "js-yaml": "^4.1.0",
     "ts-patch": "^3.2.1",
     "typescript": "^5.5.2"

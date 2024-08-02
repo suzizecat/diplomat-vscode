@@ -1,0 +1,60 @@
+{
+	"Logic input" : {
+		"prefix": "in",
+		"body":  [
+			"input logic $2 i_$1,",
+			"$0"
+		],
+		"description": "Logic input port declaration"
+	},
+	"Logic output" : {
+		"prefix": "out",
+		"body": [
+			"output logic $2 o_$1,",
+			"$0"
+		],
+		"description": "Logic output port declaration"
+	},
+	"Standard FF process" : {
+		"prefix": "ff",
+		"body": [
+			"always_ff @( posedge i_${1:clk} or negedge i_${2:rst_n} ) begin : p_seq_$3",
+			"    if (~i_$2) begin",
+			"        $4",
+			"    end else begin",
+			"        $0",
+			"    end",
+			"end"
+		],
+		"description": "Sequential FF structure"
+	},
+	"Module" : {
+		"prefix": "mod",
+		"body": [
+			"module ${1:$TM_FILENAME_BASE} (",
+			"    $2",
+			");",
+			"    $0",
+			"endmodule",
+			""
+		],
+		"description": "Module declaration"
+	},
+	"Module Parameters" : {
+		"prefix": "modp",
+		"body": [
+			"module ${1:$TM_FILENAME_BASE} #(",
+			" $2",
+			") (",
+			"    $3",
+			");",
+			"    $0",
+			"endmodule",
+			""
+		],
+		"description": "Module declaration with parameters"
+	}
+
+
+}
+

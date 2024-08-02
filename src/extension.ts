@@ -133,6 +133,7 @@ export function activate(context: ExtensionContext) {
 	
 	commands.executeCommand('setContext', 'diplomat-host.supportedWavesFiles', waveViewer.supportedExtensions);
 	commands.executeCommand('setContext', 'diplomat-host.supportedDesignFiles', workspace.getConfiguration("diplomatServer.index").get<string[]>("validExtensions"));
+	
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -157,9 +158,7 @@ export function activate(context: ExtensionContext) {
 		console.log("Opening waveform...");
 		waveViewer.openWave(args.fsPath);
 	}));
-	context.subscriptions.push(commands.registerCommand('diplomat-host.instanciate', async () => {
-		showInstanciate();
-	}));
+	context.subscriptions.push(commands.registerCommand('diplomat-host.instanciate',showInstanciate));
 
 	context.subscriptions.push(commands.registerCommand("diplomat-host.force-pull-config", async () => {
 		diplomat.pullParameters(context);
@@ -195,8 +194,9 @@ export function activate(context: ExtensionContext) {
 		.then(() => { return diplomat.pushParameters(context) })
 		.then(() => { return dataprovider.refresh()});
 	
-
-	console.log('Congratulations, your extension "diplomat-host" is now active!');
+	// Elements may use this variable to toggle visibility on extension availability.
+	void commands.executeCommand('setContext', 'diplomat-host:enabled', true)
+	console.log('Diplomat activation completed');
 }
 
 

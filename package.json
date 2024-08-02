@@ -3,16 +3,18 @@
   "displayName": "diplomat-host",
   "description": "",
   "publisher": "jfaucher",
-  "version": "0.1.0",
+  "version": "0.1.1-dev",
   "repository": {},
   "engines": {
     "vscode": "^1.81.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Snippets",
+    "Programming Languages",
+    "Linters"
   ],
   "activationEvents": [
-    "onCommand:diplomat-host.helloWorld",
     "onLanguage:systemverilog"
   ],
   "main": "./out/extension.js",
@@ -20,19 +22,19 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "diplomat-debug",
-          "title": "Diplomat Debug",
+          "id": "diplomat-view",
+          "title": "Diplomat",
           "icon": "$(symbol-class)"
         }
       ]
     },
     "views": {
-      "diplomat-debug": [
+      "diplomat-view": [
         {
           "id": "design-hierarchy",
           "name": "Hierarchy",
-          "icon": "$(symbol-class)",
-          "contextualTitle": "Design Hierarchy Explorer"
+          "contextualTitle": "Design Hierarchy Explorer",
+          "when": "diplomat-host:enabled"
         }
       ]
     },
@@ -169,9 +171,16 @@
           ".sv",
           ".SV",
           ".svh",
-          ".SVH"
+          ".SVH",
+          ".svi"
         ],
         "configuration": "./configs/systemverilog.configuration.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "systemverilog",
+        "path": "./resources/snippets.json"
       }
     ],
     "grammars": [

@@ -31,3 +31,16 @@ export type SignalData = {
 export type FileSymbolsLookupResult = {
   [key:string] : lsp.Range[];
 }
+
+export type TestDiscoveryResults = {
+  testsuite: string,
+  kind: string,
+  location: string,
+  makefile: string
+  tests: {
+    [key: string]: Array<{
+      name: string,
+      file: string,
+      line: number
+  }> }
+}

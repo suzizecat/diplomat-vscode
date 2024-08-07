@@ -4,6 +4,8 @@ import sys
 import os
 import json
 
+import inspect
+
 parser = argparse.ArgumentParser("Cocotb Test Discovery")
 
 parser.add_argument("--mk",default="Makefile",help="Makefile path")
@@ -13,6 +15,21 @@ parser.add_argument("--file","-f",default=None,help="Output filename")
 args = parser.parse_args()
 
 sys.path.append(os.getcwd())
+
+def get_recursive_wrapped(fct) :
+	ret = fct
+	while hasattr(ret,"__wrapped__") :
+		ret = ret.__wrapped__
+
+	return ret
+
+def testinfo(test) :
+	orig_fct = get_recursive_wrapped(test._func)
+	return {
+		"name":test.name,
+		"file":inspect.getsourcefile(orig_fct),
+		"line":inspect.getsourcelines(orig_fct)[1]
+	}
 
 # print(f"Lookup in {os.getcwd()}")
 testlist = RegressionManager._discover_tests()
@@ -30,9 +47,9 @@ stages = dict()
 for test in testlist :
 	curr_stage = int(test.stage)
 	if curr_stage not in stages:
-		stages[curr_stage] = [test.name]
+		stages[curr_stage] = [testinfo(test)]
 	else :
-		stages[curr_stage].append(test.name)
+		stages[curr_stage].append(testinfo(test))
 
 
 output["tests"] = stages

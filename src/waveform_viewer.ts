@@ -279,7 +279,7 @@ export class GTKWaveViewer extends BaseViewer {
     }
 
     public async getSignals(signals: string[]): Promise<SignalData[]> {
-        console.log(`Request get signals from GTKWave of ${signals}`)
+        console.log(`Request get signals from GTKWave of ${signals}`);
         await this.sendCommand(`set signals_to_get { ${signals.join(" ")} }`);
         let result: string = await this.exchangeCommand(`get_signals_values $signals_to_get`);
         console.log(`Got values`)

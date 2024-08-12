@@ -25,10 +25,13 @@ def get_recursive_wrapped(fct) :
 
 def testinfo(test) :
 	orig_fct = get_recursive_wrapped(test._func)
+	sourcelines, start_line = inspect.getsourcelines(orig_fct)
 	return {
 		"name":test.name,
 		"file":inspect.getsourcefile(orig_fct),
-		"line":inspect.getsourcelines(orig_fct)[1]
+		"startLine": start_line,
+		"lastLine" : start_line + len(sourcelines),
+		"lastChar" : len(sourcelines[-1])
 	}
 
 # print(f"Lookup in {os.getcwd()}")
@@ -44,15 +47,20 @@ output = {
 
 stages = dict()
 
+testinfo_list = list()
+
+
 for test in testlist :
-	curr_stage = int(test.stage)
-	if curr_stage not in stages:
-		stages[curr_stage] = [testinfo(test)]
-	else :
-		stages[curr_stage].append(testinfo(test))
+	testinfo_list.append(testinfo(test))
+	# curr_stage = int(test.stage)
+
+	# if curr_stage not in stages:
+	# 	stages[curr_stage] = [testinfo(test)]
+	# else :
+	# 	stages[curr_stage].append(testinfo(test))
 
 
-output["tests"] = stages
+output["tests"] = testinfo_list
 	
 if args.file is None :
 	print(json.dumps(output, indent=2))

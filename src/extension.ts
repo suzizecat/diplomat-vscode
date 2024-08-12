@@ -127,7 +127,7 @@ export function activate(context: ExtensionContext) {
 		}
 	}
 
-	waveViewer = new GTKWaveViewer(context,gtkwaveExecutable, gtkwaveOptions, forwardViewerCommands, [".vcd",".fst",".gtkw"]);
+	waveViewer = new GTKWaveViewer(context,gtkwaveExecutable, gtkwaveOptions, forwardViewerCommands, [".vcd",".fst",".gtkw",".ghw"]);
 	waveViewer.verboseLog = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<boolean>("verbose",true);
 	context.subscriptions.push(waveViewer);
 	

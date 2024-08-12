@@ -293,6 +293,7 @@
   "dependencies": {
     "ts-semaphore": "1.0.0",
     "typia": "~6.5.4",
+    "fast-xml-parser": "~4.4.1",
     "vscode-languageclient": "8.2.0-next.0"
   }
 }

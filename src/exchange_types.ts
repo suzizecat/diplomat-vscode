@@ -37,10 +37,11 @@ export type TestDiscoveryResults = {
   kind: string,
   location: string,
   makefile: string
-  tests: {
-    [key: string]: Array<{
+  tests: Array<{
       name: string,
       file: string,
-      line: number
-  }> }
+      startLine: number,
+      lastLine: number,
+      lastChar: number
+}>
 }

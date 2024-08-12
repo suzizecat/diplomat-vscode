@@ -1,15 +1,17 @@
 
-import {ExtensionContext, FileType, Position, Range, TestController, TestItem, TestRunRequest, tests, Uri, workspace}  from "vscode";
+import {ExtensionContext, FileType, Position, Range, TestController, TestItem, TestMessage, TestRunProfileKind, TestRunRequest, tests, Uri, workspace}  from "vscode";
 import { TestDiscoveryResults } from "./exchange_types";
 import { spawn, ChildProcess, exec, spawnSync} from 'node:child_process';
 import path = require("node:path");
 import { assertEquals } from "typia";
 import { CancellationToken } from "vscode-languageclient";
+import { XMLParser } from "fast-xml-parser";
 
-
-class DiplomatTestController {
+import * as nodefs from  "node:fs/promises" ;
+export class DiplomatTestController {
 	public controller: TestController
-	protected context : ExtensionContext
+	protected context: ExtensionContext
+	protected xmlParser : XMLParser = new XMLParser()
 
 
 	constructor(context: ExtensionContext) {
@@ -17,18 +19,23 @@ class DiplomatTestController {
 		this.controller = tests.createTestController('diplomatTests', 'Diplomat Tests');
 
 		this.controller.resolveHandler = async test => {
+			console.log("Start test resolution");
 			if (!test) {
 				let validMakefiles = await this.findAllMakefiles();
 				for(let mkFile of validMakefiles)
 				{
-					let discovery : TestDiscoveryResults = await this.discoverFromMakefile(mkFile);
-					const testId = path.join(discovery.location,discovery.makefile)
-					let testsuite = this.controller.createTestItem(testId,discovery.testsuite,Uri.file(testId));
-					testsuite.canResolveChildren = true;
+					console.log(`Processing makefile ${mkFile}`);
+					await this.discoverFromMakefile(mkFile).then((discovery) => {this.testsFromDiscoveryResults(discovery);},(reason) => (console.log("    Failed to process.")));
+					
 				}
 			}
 		}
+
+		this.controller.createRunProfile("Run Cocotb", TestRunProfileKind.Run, (request, token) => runCocotbHandler(this.controller, request, token), true);
 	}
+
+	public dispose() {
+    }
 
 	protected async findAllMakefiles(root : Uri[] | null = null): Promise<Uri[]> {
 		let ret: Uri[] = [];
@@ -51,7 +58,7 @@ class DiplomatTestController {
 							.then((data) => {
 								let fileData : string = new TextDecoder().decode(data);
 								return Promise.resolve(fileData.includes("include $(shell cocotb-config --makefiles)/Makefile.sim"));
-							});
+							}, (reason) => { return Promise.resolve(false) });
 
 						if(isValidMakefile)
 							ret.push(newMakeFile);
@@ -67,6 +74,7 @@ class DiplomatTestController {
 	}
 
 	protected async discoverFromMakefile(makefile : Uri) : Promise<TestDiscoveryResults> {
+		console.log(`Discover from makefile ${makefile.toString()}`);
 		let execEnv = process.env;
 
 		if(! this.context.storageUri)
@@ -77,13 +85,21 @@ class DiplomatTestController {
 		execEnv.ODIR = this.context.storageUri.fsPath;
 		execEnv.OFILE = "cocotb-discovery.json";
 
+
+
 		let discoveryMakefile : string = this.context.asAbsolutePath(path.join("resources","discovery.mk"));
 		let theProcess = spawnSync("make",["-f", discoveryMakefile],{"env" : execEnv, cwd : path.dirname(makefile.fsPath)});
 
-		if(theProcess.error)
+		console.log("Discovery result:");
+		if(theProcess.error || theProcess.status != 0)
 		{
-			return Promise.reject(theProcess.error.message);
+			console.log("Error : " + theProcess.stderr.toString());
+			return Promise.reject(theProcess.error?.message);
+		} else 
+		{
+			console.log(theProcess.stdout.toString());
 		}
+
 
 		return Promise.resolve(assertEquals<TestDiscoveryResults>(JSON.parse(
 			await workspace.fs.readFile(outputFile).then((data) => {
@@ -92,9 +108,9 @@ class DiplomatTestController {
 		)))
 	}
 
-	protected testsFromDiscoveryResults(discovery : TestDiscoveryResults) : TestItem[] {
-		let ret : TestItem[] = []
-		const testSuiteId = path.join(discovery.location,discovery.makefile)
+	protected testsFromDiscoveryResults(discovery : TestDiscoveryResults) {
+
+		const testSuiteId = discovery.makefile
 
 		let testsuite = this.controller.createTestItem(testSuiteId,discovery.testsuite,Uri.file(testSuiteId))
 		this.controller.items.add(testsuite)
@@ -112,23 +128,29 @@ class DiplomatTestController {
 			test.canResolveChildren = false;
 
 		}
-
-		return ret;
 	}
 
-	private runCocotbHandler(
-		shouldDebug: boolean,
+	}
+
+	async function  runCocotbHandler(
+	    controller : TestController,
 		request : TestRunRequest,
 		token : CancellationToken
 	) {
-		const run = this.controller.createTestRun(request);
-		const testlist : TestItem[] = []
+
+		const run = controller.createTestRun(request);
+		let testlist: TestItem[] = []
+		
+		let xmlParser = new XMLParser({ignoreAttributes : false, attributesGroupName : "@attr"});
 
 		if(request.include) {
 			request.include.forEach(test => request.exclude?.includes(test) ? null : testlist.push(test));
 		}
 
-		let testsuites : {[key:string] : string[]} = {};
+		let testsuites: { [key: string]: string[] } = {};
+		let testmap: { [key: string]: TestItem } = {}
+		
+		testlist.forEach(test => { testmap[test.parent === undefined ? test.id : test.label] = test; });
 
 		for(let test of testlist)
 		{
@@ -147,31 +169,63 @@ class DiplomatTestController {
 		for(let runSuite in testsuites)
 		{
 			let execEnv = process.env
-
+			let testsNames: string[] = [];
 			if(testsuites[runSuite].length > 0) {
 				execEnv.TESTCASE = testsuites[runSuite].join(",");
+				testsNames = testsuites[runSuite];
 			} else {
 				delete execEnv.TESTCASE;
+				testsNames = [runSuite];
 			}
 			
 			let execOptions = {"env":execEnv, cwd : path.dirname(runSuite)};
+			console.log(`Start runner for ${runSuite} at ${path.dirname(runSuite)}`);
+			let runner = spawn("make", execOptions);
 
-			(
-				async () => {
-					let runner = spawnSync("make",[],execOptions);
+			token.onCancellationRequested(() => {
+				console.log("Request to kill the runner.")
+				if (runner.connected)
+					runner.kill();
+			});
 
-					await done;
+			runner.stderr.on("data", (data) => {
+				run.appendOutput(data);
+			});
+			runner.stdout.on("data", (data) => {
+				let toPrint : string = data.toString();
+
+				run.appendOutput(toPrint.replace("\n","\r\n"));
+			});
+
+			runner.on("error", (err) => { console.log(err); });
+
+			let runnerDone = new Promise((resolve) => {
+				runner.on("close", resolve);
+				runner.on("error", resolve);
+			});
+			
+			await runnerDone;
+
+
+				if (runner.exitCode != 0) {
+					testsNames.forEach((tname) => { run.failed(testmap[tname],new TestMessage(`Failed with exit code ${runner.exitCode}`)) });	
 				}
-			)
+				else {
+					let resultUri = Uri.file(path.join(execOptions.cwd, "results.xml"));
+					let resultBuffer = await workspace.fs.readFile(resultUri);
+					let resultText = new TextDecoder().decode(resultBuffer);
+					let resultObj = xmlParser.parse(resultText);
 
+					// Pass everything, we'll come to this later. 
+					let isPassed = true;
+					resultObj.testsuites.testsuite.testcase.forEach(element => {
+						console.log(element["@_name"]);
+					});
+					testsNames.forEach((tname) => { run.passed(testmap[tname]) });
+					
+					console.log(resultObj);
+				}
 		}
 
-
-
-
-		let runner = spawn("make", [], {"env":execEnv, cwd:})
-
+		run.end();
 	}
-}
-
-  

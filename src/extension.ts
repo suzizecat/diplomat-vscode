@@ -15,6 +15,8 @@ import { Location } from 'vscode-languageclient';
 import { DesignElement, DesignHierarchyTreeProvider } from "./designExplorerPanel";
 
 import { TextAnnotator } from './text_annotator';
+
+import { DiplomatTestController } from './tests_controller';
 //import * as globalvar from "./global";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -27,6 +29,10 @@ export function activate(context: ExtensionContext) {
 	
 	const gtkwaveExecutable = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string>("path");
 	const gtkwaveOptions = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string[]>("options");
+	
+	const testController = new DiplomatTestController(context)
+
+	context.subscriptions.push(testController);
 
 	const annotationDecorationType = window.createTextEditorDecorationType({})
 

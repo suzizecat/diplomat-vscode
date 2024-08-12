@@ -20,4 +20,4 @@ discovery:
 discodbg:
 	MODULE=$(MODULE) python3 $(DISCO_SCRIPT) --mk $(TARGET)
 
-include ./$(TARGET)
+include $(TARGET)

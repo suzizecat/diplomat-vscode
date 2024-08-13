@@ -8,6 +8,7 @@ import { CancellationToken } from "vscode-languageclient";
 import { XMLParser } from "fast-xml-parser";
 
 import * as nodefs from  "node:fs/promises" ;
+import test from "node:test";
 export class DiplomatTestController {
 	public controller: TestController
 	protected context: ExtensionContext
@@ -141,7 +142,7 @@ export class DiplomatTestController {
 		const run = controller.createTestRun(request);
 		let testlist: TestItem[] = []
 		
-		let xmlParser = new XMLParser({ignoreAttributes : false, attributesGroupName : "@attr"});
+		let xmlParser = new XMLParser({ignoreAttributes : false});
 
 		if(request.include) {
 			request.include.forEach(test => request.exclude?.includes(test) ? null : testlist.push(test));
@@ -169,6 +170,7 @@ export class DiplomatTestController {
 		for(let runSuite in testsuites)
 		{
 			let execEnv = process.env
+			execEnv.COCOTB_ANSI_OUTPUT = "1"
 			let testsNames: string[] = [];
 			if(testsuites[runSuite].length > 0) {
 				execEnv.TESTCASE = testsuites[runSuite].join(",");
@@ -194,7 +196,7 @@ export class DiplomatTestController {
 			runner.stdout.on("data", (data) => {
 				let toPrint : string = data.toString();
 
-				run.appendOutput(toPrint.replace("\n","\r\n"));
+				run.appendOutput(toPrint.replace(/\n/g,"\r\n"));
 			});
 
 			runner.on("error", (err) => { console.log(err); });
@@ -206,6 +208,15 @@ export class DiplomatTestController {
 			
 			await runnerDone;
 
+			if (Object.keys(testmap).includes(runSuite) && testmap[runSuite].parent === undefined) {
+				testsNames = []
+				testmap[runSuite].children.forEach((item) => {
+					testsNames.push(item.label)
+					testsuites[runSuite].push(item.label);
+					testmap[item.label] = item;
+				});
+
+			}
 
 				if (runner.exitCode != 0) {
 					testsNames.forEach((tname) => { run.failed(testmap[tname],new TestMessage(`Failed with exit code ${runner.exitCode}`)) });	
@@ -218,11 +229,41 @@ export class DiplomatTestController {
 
 					// Pass everything, we'll come to this later. 
 					let isPassed = true;
-					resultObj.testsuites.testsuite.testcase.forEach(element => {
-						console.log(element["@_name"]);
-					});
-					testsNames.forEach((tname) => { run.passed(testmap[tname]) });
-					
+
+					if (testsNames.length == 1) {
+						isPassed = false;
+						let currTestName = testsNames[0];
+						let currTest = testmap[currTestName];
+						
+						if (resultObj?.testsuites?.testsuite?.testcase)
+							if (resultObj.testsuites.testsuite.testcase["@_name"] == currTestName)
+								if (resultObj.testsuites.testsuite.testcase.failure === undefined)
+								{
+									run.passed(currTest);
+									isPassed = true
+								}
+								else
+									run.failed(currTest, new TestMessage("Test failed"));
+							else
+								run.failed(currTest, new TestMessage("Test missing from results"));
+						else
+							run.failed(currTest, new TestMessage("Malformed results.xml"));							
+					}
+					else {
+						
+						if (resultObj?.testsuites?.testsuite?.testcase)
+						{
+							resultObj.testsuites.testsuite.testcase.forEach((element: any) => {
+								if (Object.keys(testmap).includes(element["@_name"]))
+									if (!element.failure)
+										run.passed(testmap[element["@_name"]]);
+									else
+										run.failed(testmap[element["@_name"]], new TestMessage("Test failed"));
+							});
+						}
+						else
+							testsNames.forEach((tname) => { run.failed(testmap[tname], new TestMessage("Malformed results.xml")) });
+					}
 					console.log(resultObj);
 				}
 		}

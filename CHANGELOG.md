@@ -1,7 +1,12 @@
 # Changelog
 
+## Added 
+- Add CocoTB integration (discover and run tests)
 - Adds snippets 
+
+## Changed
 - Prevent the Diplomat view from being visible if the extension if not activated.
+
 
 # 0.1.0
 Considered as the first working distributed version.

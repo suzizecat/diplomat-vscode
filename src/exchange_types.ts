@@ -40,6 +40,7 @@ export type TestDiscoveryResults = {
   tests: Array<{
       name: string,
       file: string,
+      comment:string | null,
       startLine: number,
       lastLine: number,
       lastChar: number

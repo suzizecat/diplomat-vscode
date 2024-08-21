@@ -29,6 +29,7 @@ def testinfo(test) :
 	return {
 		"name":test.name,
 		"file":inspect.getsourcefile(orig_fct),
+		"comment" : orig_fct.__doc__.strip() if orig_fct.__doc__ is not None else None,
 		"startLine": start_line,
 		"lastLine" : start_line + len(sourcelines),
 		"lastChar" : len(sourcelines[-1])

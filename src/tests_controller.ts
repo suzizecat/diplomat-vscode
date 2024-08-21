@@ -1,5 +1,5 @@
 
-import {ExtensionContext, FileType, Position, Range, TestController, TestItem, TestMessage, TestRunProfileKind, TestRunRequest, tests, Uri, workspace}  from "vscode";
+import {ExtensionContext, FileType, Position, Progress, ProgressLocation, Range, TestController, TestItem, TestMessage, TestRunProfileKind, TestRunRequest, tests, Uri, window, workspace}  from "vscode";
 import { TestDiscoveryResults } from "./exchange_types";
 import { spawn, ChildProcess, exec, spawnSync} from 'node:child_process';
 import path = require("node:path");
@@ -14,31 +14,79 @@ export class DiplomatTestController {
 	protected context: ExtensionContext
 	protected xmlParser : XMLParser = new XMLParser()
 
+	protected discoveryMap: { [key: string]: Uri } = {};
+	protected mkfileList: Uri[] = [];
+
+	protected progressController: Progress<{
+		message?: string;
+		increment?: number;
+	}> | null = null;
+
 
 	constructor(context: ExtensionContext) {
 		this.context = context;
 		this.controller = tests.createTestController('diplomatTests', 'Diplomat Tests');
-
 		this.controller.resolveHandler = async test => {
 			console.log("Start test resolution");
+			if (test && !Object.keys(this.discoveryMap).includes(test.id))
+			{
+				console.log(`Test ${test.id} not found in discovery map, relaunching full discovery`);
+				test = undefined;
+			}
 			if (!test) {
-				let validMakefiles = await this.findAllMakefiles();
-				for(let mkFile of validMakefiles)
-				{
-					console.log(`Processing makefile ${mkFile}`);
-					await this.discoverFromMakefile(mkFile).then((discovery) => {this.testsFromDiscoveryResults(discovery);},(reason) => (console.log("    Failed to process.")));
-					
-				}
+				await window.withProgress({ location: ProgressLocation.Notification, title: "Test discovery" },
+					async (progress) => {
+						this.progressController = progress;
+						await this.findAllMakefiles();
+						for(let mkFile of this.mkfileList)
+						{
+							console.log(`Processing makefile ${mkFile}`);
+							this.progressController.report({ message: `Processing ${mkFile.path}...`, increment: (100/this.mkfileList.length) });
+							await this.processMakefile(mkFile);					
+						}
+						return Promise.resolve();
+					})
+					.then(() => {
+						this.progressController = null;
+					});
+			}
+			else {
+				// console.log(`Refresh discoverty of test ${test.id}`);
+				// if (Object.keys(this.discoveryMap).includes(test.id))
+				// {
+				// 	await this.processMakefile(this.discoveryMap[test.id]);
+				// }
 			}
 		}
+
+		this.controller.refreshHandler = async (token) => {
+			if (this.controller.resolveHandler)
+				await this.controller.resolveHandler(undefined);
+		};
 
 		this.controller.createRunProfile("Run Cocotb", TestRunProfileKind.Run, (request, token) => runCocotbHandler(this.controller, request, token), true);
 	}
 
 	public dispose() {
-    }
+	}
+	
+	protected async processMakefile(makefile: Uri): Promise<void> {
+		await this.discoverFromMakefile(makefile)
+			.then((discovery) => {
+				this.testsFromDiscoveryResults(discovery);
+			},
+				(reason) => {
+					console.log("    Failed to process.");
+				}
+		);
+		
+		return Promise.resolve();
+	}
 
-	protected async findAllMakefiles(root : Uri[] | null = null): Promise<Uri[]> {
+	protected async findAllMakefiles(root: Uri[] | null = null): Promise<void> {
+
+		if(!root)
+			this.mkfileList = [];
 		let ret: Uri[] = [];
 		let next_targets: Uri[] = [];
 		const targets : Uri[] = root ? root : (workspace.workspaceFolders) ? workspace.workspaceFolders.map((f) => { return f.uri }) : [];
@@ -49,29 +97,34 @@ export class DiplomatTestController {
 
 			for (let infos of currDirContent)
 			{
+				const targetPath = Uri.joinPath(currDir, infos[0]);
+
 				if (infos[1] == FileType.Directory)
-					next_targets.push(Uri.joinPath(currDir, infos[0]));
+					next_targets.push(targetPath);
 				else {
 					if(infos[0] == "Makefile")
 					{
-						const newMakeFile = Uri.joinPath(currDir, infos[0])
-						var isValidMakefile = await workspace.fs.readFile(newMakeFile)
+						if (this.progressController)
+							this.progressController.report({ message: `Checking ${targetPath.path}`});
+						console.log(`    Checking ${targetPath.path}`);
+
+						var isValidMakefile = await workspace.fs.readFile(targetPath)
 							.then((data) => {
 								let fileData : string = new TextDecoder().decode(data);
 								return Promise.resolve(fileData.includes("include $(shell cocotb-config --makefiles)/Makefile.sim"));
 							}, (reason) => { return Promise.resolve(false) });
 
-						if(isValidMakefile)
-							ret.push(newMakeFile);
+						if (isValidMakefile) {
+							this.mkfileList.push(targetPath);
+							ret.push(targetPath);
+						}
 					}
 				}
 			}
 		}
 
 		if (next_targets.length > 0)
-			ret.push(... await this.findAllMakefiles(next_targets));
-
-		return Promise.resolve(ret)
+			await this.findAllMakefiles(next_targets);
 	}
 
 	protected async discoverFromMakefile(makefile : Uri) : Promise<TestDiscoveryResults> {
@@ -111,13 +164,19 @@ export class DiplomatTestController {
 
 	protected testsFromDiscoveryResults(discovery : TestDiscoveryResults) {
 
-		const testSuiteId = discovery.makefile
+		const testSuiteId = discovery.makefile;
+		const makefileUri = Uri.file(discovery.makefile);
+		this.discoveryMap[testSuiteId] = makefileUri;
 
-		let testsuite = this.controller.createTestItem(testSuiteId,discovery.testsuite,Uri.file(testSuiteId))
+		let testsuite = this.controller.createTestItem(testSuiteId, discovery.testsuite, Uri.file(testSuiteId))
+		testsuite.canResolveChildren = true;
+
 		this.controller.items.add(testsuite)
 
-		for(let testInfos of discovery.tests) {
-			let test = this.controller.createTestItem(`${testsuite}:${testInfos.name}`,testInfos.name,Uri.file(testInfos.file));
+		for (let testInfos of discovery.tests) {
+			const testId: string = `${testsuite}:${testInfos.name}`;
+			this.discoveryMap[testId] = makefileUri;
+			let test = this.controller.createTestItem(testId,testInfos.name,Uri.file(testInfos.file));
 			test.range = new Range(
 				testInfos.startLine,
 				0,
@@ -125,6 +184,9 @@ export class DiplomatTestController {
 				testInfos.lastChar
 			);
 
+			if (testInfos.comment)
+				test.description = testInfos.comment.split("\n")[0];	
+			
 			testsuite.children.add(test);
 			test.canResolveChildren = false;
 
@@ -140,6 +202,9 @@ export class DiplomatTestController {
 	) {
 
 		const run = controller.createTestRun(request);
+
+		// Do NOT replace [^\n] by dot.
+		
 		let testlist: TestItem[] = []
 		
 		let xmlParser = new XMLParser({ignoreAttributes : false});
@@ -169,21 +234,36 @@ export class DiplomatTestController {
 
 		for(let runSuite in testsuites)
 		{
+			let requestedTestNames: string[] = [];
+			let effectiveTestsNames: string[] = [];
+
 			let execEnv = process.env
 			execEnv.COCOTB_ANSI_OUTPUT = "1"
-			let testsNames: string[] = [];
+
 			if(testsuites[runSuite].length > 0) {
 				execEnv.TESTCASE = testsuites[runSuite].join(",");
-				testsNames = testsuites[runSuite];
+				requestedTestNames = testsuites[runSuite];
 			} else {
 				delete execEnv.TESTCASE;
-				testsNames = [runSuite];
+				requestedTestNames = [runSuite];
+			}
+
+			effectiveTestsNames = requestedTestNames;
+
+			if (Object.keys(testmap).includes(runSuite) && testmap[runSuite].parent === undefined) {
+				effectiveTestsNames = []
+				testmap[runSuite].children.forEach((item) => {
+					effectiveTestsNames.push(item.label)
+					testsuites[runSuite].push(item.label);
+					testmap[item.label] = item;
+				});
+
 			}
 			
 			let execOptions = {"env":execEnv, cwd : path.dirname(runSuite)};
 			console.log(`Start runner for ${runSuite} at ${path.dirname(runSuite)}`);
 			let runner = spawn("make", execOptions);
-
+			var runningTest: TestItem | undefined = undefined;
 			token.onCancellationRequested(() => {
 				console.log("Request to kill the runner.")
 				if (runner.connected)
@@ -191,12 +271,27 @@ export class DiplomatTestController {
 			});
 
 			runner.stderr.on("data", (data) => {
-				run.appendOutput(data);
+				run.appendOutput(data,undefined,runningTest);
 			});
+			var testData : string[] = []
 			runner.stdout.on("data", (data) => {
-				let toPrint : string = data.toString();
+				let toPrint: string = data.toString();
 
-				run.appendOutput(toPrint.replace(/\n/g,"\r\n"));
+				const cocotbNextTestRegex = new RegExp(/\n[^\n]+cocotb\.regression\s+[^\n]*running[^\n]* (\w+) /, "g");
+				let regexResult;
+				let startPoint = 0;
+				testData.push(toPrint);
+				while ((regexResult = cocotbNextTestRegex.exec(toPrint)) !== null)
+				{
+					let end_of_residual = cocotbNextTestRegex.lastIndex - regexResult[0].length;
+					run.appendOutput(toPrint.slice(startPoint,end_of_residual ).replace(/\n/g,"\r\n"), undefined, runningTest);
+					console.log(`Switching to ${regexResult[1]}`);
+					runningTest = testmap[regexResult[1]];
+
+					startPoint = end_of_residual;
+				}
+
+				run.appendOutput(toPrint.slice(startPoint).replace(/\n/g,"\r\n"), undefined, runningTest);
 			});
 
 			runner.on("error", (err) => { console.log(err); });
@@ -206,66 +301,56 @@ export class DiplomatTestController {
 				runner.on("error", resolve);
 			});
 			
-			await runnerDone;
+			await runnerDone; 
 
-			if (Object.keys(testmap).includes(runSuite) && testmap[runSuite].parent === undefined) {
-				testsNames = []
-				testmap[runSuite].children.forEach((item) => {
-					testsNames.push(item.label)
-					testsuites[runSuite].push(item.label);
-					testmap[item.label] = item;
-				});
-
+			if (runner.exitCode != 0) {
+				effectiveTestsNames.forEach((tname) => { run.failed(testmap[tname],new TestMessage(`Failed with exit code ${runner.exitCode}`)) });	
 			}
+			else {
+				let resultUri = Uri.file(path.join(execOptions.cwd, "results.xml"));
+				let resultBuffer = await workspace.fs.readFile(resultUri);
+				let resultText = new TextDecoder().decode(resultBuffer);
+				let resultObj = xmlParser.parse(resultText);
 
-				if (runner.exitCode != 0) {
-					testsNames.forEach((tname) => { run.failed(testmap[tname],new TestMessage(`Failed with exit code ${runner.exitCode}`)) });	
+				// Pass everything, we'll come to this later. 
+				let isPassed = true;
+
+				if (effectiveTestsNames.length == 1) {
+					isPassed = false;
+					let currTestName = effectiveTestsNames[0];
+					let currTest = testmap[currTestName];
+					
+					if (resultObj?.testsuites?.testsuite?.testcase)
+						if (resultObj.testsuites.testsuite.testcase["@_name"] == currTestName)
+							if (resultObj.testsuites.testsuite.testcase.failure === undefined)
+							{
+								run.passed(currTest);
+								isPassed = true
+							}
+							else
+								run.failed(currTest, new TestMessage("Test failed"));
+						else
+							run.failed(currTest, new TestMessage("Test missing from results"));
+					else
+						run.failed(currTest, new TestMessage("Malformed results.xml"));							
 				}
 				else {
-					let resultUri = Uri.file(path.join(execOptions.cwd, "results.xml"));
-					let resultBuffer = await workspace.fs.readFile(resultUri);
-					let resultText = new TextDecoder().decode(resultBuffer);
-					let resultObj = xmlParser.parse(resultText);
-
-					// Pass everything, we'll come to this later. 
-					let isPassed = true;
-
-					if (testsNames.length == 1) {
-						isPassed = false;
-						let currTestName = testsNames[0];
-						let currTest = testmap[currTestName];
-						
-						if (resultObj?.testsuites?.testsuite?.testcase)
-							if (resultObj.testsuites.testsuite.testcase["@_name"] == currTestName)
-								if (resultObj.testsuites.testsuite.testcase.failure === undefined)
-								{
-									run.passed(currTest);
-									isPassed = true
-								}
+					
+					if (resultObj?.testsuites?.testsuite?.testcase)
+					{
+						resultObj.testsuites.testsuite.testcase.forEach((element: any) => {
+							if (Object.keys(testmap).includes(element["@_name"]))
+								if (!element.failure)
+									run.passed(testmap[element["@_name"]]);
 								else
-									run.failed(currTest, new TestMessage("Test failed"));
-							else
-								run.failed(currTest, new TestMessage("Test missing from results"));
-						else
-							run.failed(currTest, new TestMessage("Malformed results.xml"));							
+									run.failed(testmap[element["@_name"]], new TestMessage("Test failed"));
+						});
 					}
-					else {
-						
-						if (resultObj?.testsuites?.testsuite?.testcase)
-						{
-							resultObj.testsuites.testsuite.testcase.forEach((element: any) => {
-								if (Object.keys(testmap).includes(element["@_name"]))
-									if (!element.failure)
-										run.passed(testmap[element["@_name"]]);
-									else
-										run.failed(testmap[element["@_name"]], new TestMessage("Test failed"));
-							});
-						}
-						else
-							testsNames.forEach((tname) => { run.failed(testmap[tname], new TestMessage("Malformed results.xml")) });
-					}
-					console.log(resultObj);
+					else
+						effectiveTestsNames.forEach((tname) => { run.failed(testmap[tname], new TestMessage("Malformed results.xml")) });
 				}
+				console.log(resultObj);
+			}
 		}
 
 		run.end();

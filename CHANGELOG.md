@@ -1,6 +1,10 @@
 # Changelog
 
+# 0.2.0 - 2024-12-16
+
 ## Added 
+- Add "Add signal to waveform viewer" function (#5)
+- Add basic infrastructure for client-side logging (`Output > [diplomat] Host` channel)
 - Add CocoTB integration (discover and run tests)
 - Adds snippets 
 

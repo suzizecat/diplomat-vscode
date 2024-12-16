@@ -214,6 +214,7 @@ export class DiplomatTestController {
 		}
 
 		let testsuites: { [key: string]: string[] } = {};
+		let testErrors: { [key: string]: string[] } = {};
 		let testmap: { [key: string]: TestItem } = {}
 		
 		testlist.forEach(test => { testmap[test.parent === undefined ? test.id : test.label] = test; });
@@ -273,25 +274,49 @@ export class DiplomatTestController {
 			runner.stderr.on("data", (data) => {
 				run.appendOutput(data,undefined,runningTest);
 			});
-			var testData : string[] = []
+			
+			var testData: string[] = [];
+			var leftoverDataToPrint: string | undefined = "";
+
 			runner.stdout.on("data", (data) => {
-				let toPrint: string = data.toString();
+				let toPrint: string[] = data.toString().split("\n");
 
-				const cocotbNextTestRegex = new RegExp(/\n[^\n]+cocotb\.regression\s+[^\n]*running[^\n]* (\w+) /, "g");
+				const cocotbNextTestRegex = new RegExp(/[^\n]+cocotb\.regression\s+[^\n]*running[^\n]* (\w+) /, "g");
+				const cocotbErrorMsgRegex = new RegExp(/\s*(?:-\.--|\d+\.\d+)\ws\s+\S*(?:ERROR|FATAL)/, "g");
 				let regexResult;
-				let startPoint = 0;
-				testData.push(toPrint);
-				while ((regexResult = cocotbNextTestRegex.exec(toPrint)) !== null)
-				{
-					let end_of_residual = cocotbNextTestRegex.lastIndex - regexResult[0].length;
-					run.appendOutput(toPrint.slice(startPoint,end_of_residual ).replace(/\n/g,"\r\n"), undefined, runningTest);
-					console.log(`Switching to ${regexResult[1]}`);
-					runningTest = testmap[regexResult[1]];
 
-					startPoint = end_of_residual;
+				for (let line of toPrint.slice(0,-1))
+				{
+					// Adds leftover data, if relevant.
+					// As the last line should be an empty string (if the whole text ends with \n)
+					// leftoverDataToPrint should be empty if all data has been handled properly.
+					if (leftoverDataToPrint && leftoverDataToPrint != "")
+					{
+						line = leftoverDataToPrint + line;
+						leftoverDataToPrint = "";
+					}	
+
+					// If we start a new test section
+					if ((regexResult = cocotbNextTestRegex.exec(line)) !== null)
+					{
+						runningTest = testmap[regexResult[1]];
+						console.log(`Switching to ${regexResult[1]}`);
+					}
+
+					
+					if (runningTest && cocotbErrorMsgRegex.test(line))
+					{
+						console.log(`Adding error to test id ${runningTest.id}`);
+						if (! Object.keys(testErrors).includes(runningTest.id))
+							testErrors[runningTest.id] = []
+						testErrors[runningTest.id].push(line);
+					}
+					
+					run.appendOutput(`${line}\r\n`, undefined, runningTest);	
 				}
 
-				run.appendOutput(toPrint.slice(startPoint).replace(/\n/g,"\r\n"), undefined, runningTest);
+				leftoverDataToPrint = toPrint.at(-1);
+
 			});
 
 			runner.on("error", (err) => { console.log(err); });
@@ -322,32 +347,44 @@ export class DiplomatTestController {
 					
 					if (resultObj?.testsuites?.testsuite?.testcase)
 						if (resultObj.testsuites.testsuite.testcase["@_name"] == currTestName)
-							if (resultObj.testsuites.testsuite.testcase.failure === undefined)
-							{
+							if (resultObj.testsuites.testsuite.testcase.failure === undefined) {
 								run.passed(currTest);
 								isPassed = true
 							}
 							else
-								run.failed(currTest, new TestMessage("Test failed"));
+							{
+								if (Object.keys(testErrors).includes(currTest.id))
+									run.failed(currTest, new TestMessage("Test failed.\n" + testErrors[currTest.id].join("\n")));
+								else
+									run.failed(currTest, new TestMessage("Test failed"));
+							}
 						else
-							run.failed(currTest, new TestMessage("Test missing from results"));
+							run.errored(currTest, new TestMessage("Test missing from results"));
 					else
-						run.failed(currTest, new TestMessage("Malformed results.xml"));							
+						run.errored(currTest, new TestMessage("Malformed results.xml"));							
 				}
 				else {
 					
 					if (resultObj?.testsuites?.testsuite?.testcase)
 					{
 						resultObj.testsuites.testsuite.testcase.forEach((element: any) => {
-							if (Object.keys(testmap).includes(element["@_name"]))
+							if (Object.keys(testmap).includes(element["@_name"])) {
+								let currTest = testmap[element["@_name"]];
 								if (!element.failure)
 									run.passed(testmap[element["@_name"]]);
-								else
-									run.failed(testmap[element["@_name"]], new TestMessage("Test failed"));
+								else {
+									
+									if (Object.keys(testErrors).includes(currTest.id))
+										run.failed(currTest,new TestMessage("Test failed.\n" + testErrors[currTest.id].join("\n")));
+									else
+										run.failed(currTest, new TestMessage("Test failed"));
+								}
+								//run.failed(testmap[element["@_name"]], new TestMessage("Test failed"));
+							}
 						});
 					}
 					else
-						effectiveTestsNames.forEach((tname) => { run.failed(testmap[tname], new TestMessage("Malformed results.xml")) });
+						effectiveTestsNames.forEach((tname) => { run.errored(testmap[tname], new TestMessage("Malformed results.xml")) });
 				}
 				console.log(resultObj);
 			}

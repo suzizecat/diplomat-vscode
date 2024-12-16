@@ -44,6 +44,7 @@ export function activate(context: ExtensionContext) {
 		throw new Error("`DiplomatServer.tools.GTKWave.options` is not set");
 	}
 	
+	const logger = window.createOutputChannel("[diplomat] Host", { log: true });
 
 	const forwardViewerCommands = async (args: WaveformViewerCbArgs) => {
 		let fcts : {
@@ -178,11 +179,13 @@ export function activate(context: ExtensionContext) {
 			let symbolPath = `${currHierLocation.hierPath}.${symbolName}`;
 			
 			if (currLocationSymbols.includes(symbolName)) {
+				logger.info(`Adding symbol ${symbolPath} to waveform`);
 				console.log(`Adding symbol ${symbolPath} to waveform`);
 				waveViewer.addSignalToWave([symbolPath]);
 			}
 			else
 			{
+				logger.warn(`Symbol ${symbolPath} not found in current waveform context.`);
 				console.log(`Symbol ${symbolPath} not found in current waveform context.`);
 			}
 		}

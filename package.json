@@ -62,6 +62,13 @@
           "when": "resourceExtname in diplomat-host.supportedWavesFiles"
         }
       ],
+      "editor/context": [
+        {
+          "command": "diplomat-host.waves.add-signal",
+          "group" : "1_run",
+          "when": "diplomat-host:viewerEnabled"
+        }
+      ],
       "commandPalette": [
         {
           "command": "diplomat-server.ignore",
@@ -69,6 +76,10 @@
         },
         {
           "command": "diplomat-server.set-top",
+          "when": "never"
+        },
+        {
+          "command": "diplomat-host.waves.add-signal",
           "when": "never"
         },
         {
@@ -158,6 +169,10 @@
       {
         "command": "diplomat-host.waves.clear-annotations",
         "title": "Diplomat: Clear waves annotations"
+      },
+      {
+        "command": "diplomat-host.waves.add-signal",
+        "title": "Add symbol to waveform"
       }
     ],
     "languages": [

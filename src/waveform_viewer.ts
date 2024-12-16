@@ -42,6 +42,8 @@ abstract class BaseViewer {
         this.context = context;
         this.stdoutCb = stdoutCallBack;
         console.log(`Viewer construction done, chunks are ${this.stdoutChunks !== undefined}`);
+
+        commands.executeCommand("setContext", "diplomat-host:viewerEnabled", false);
     }
 
     abstract openWave(wavefile: string): void;
@@ -89,6 +91,7 @@ abstract class BaseViewer {
         }
 
         await this.viewerClosed;
+        commands.executeCommand("setContext", "diplomat-host:viewerEnabled", false);
     }
 
     private stopAllPeriodic() {
@@ -266,6 +269,7 @@ export class GTKWaveViewer extends BaseViewer {
                 
         }, 500);
 
+        commands.executeCommand("setContext", "diplomat-host:viewerEnabled", true);
     }
 
     public async addSignalToWave(signals: string[]): Promise<void> {

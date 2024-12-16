@@ -24,6 +24,7 @@ import { DiplomatTestController } from './tests_controller';
 
 var waveViewer: GTKWaveViewer;
 var currHierLocation: DesignElement | null = null;
+var currLocationSymbols: string[] | null = null;
 
 export function activate(context: ExtensionContext) {
 	
@@ -95,7 +96,8 @@ export function activate(context: ExtensionContext) {
 				commands.executeCommand<FileSymbolsLookupResult>("displomat-server.list-symbols", designPath)
 					.then((signals) => {
 						fileLookup = signals;
-						return waveViewer.getSignals(Object.keys(signals).map((s) => { return `${designPath}.${s}` }));
+						currLocationSymbols = Object.keys(signals);
+						return waveViewer.getSignals(currLocationSymbols.map((s) => { return `${designPath}.${s}` }));
 					})
 					.then((sigDataArray) => {
 						let editor = window.activeTextEditor;
@@ -164,6 +166,28 @@ export function activate(context: ExtensionContext) {
 		console.log("Opening waveform...");
 		waveViewer.openWave(args.fsPath);
 	}));
+
+	/**
+	 * This commands adds the symbol currently under the editor cursor to the waveform.
+	 */
+	context.subscriptions.push(commands.registerCommand("diplomat-host.waves.add-signal", async () => {
+		let editor = window.activeTextEditor;
+		if (currHierLocation && editor && currLocationSymbols) {
+			
+			let symbolName = editor.document.getText(editor.document.getWordRangeAtPosition(editor.selection.start));
+			let symbolPath = `${currHierLocation.hierPath}.${symbolName}`;
+			
+			if (currLocationSymbols.includes(symbolName)) {
+				console.log(`Adding symbol ${symbolPath} to waveform`);
+				waveViewer.addSignalToWave([symbolPath]);
+			}
+			else
+			{
+				console.log(`Symbol ${symbolPath} not found in current waveform context.`);
+			}
+		}
+	}));
+
 	context.subscriptions.push(commands.registerCommand('diplomat-host.instanciate',showInstanciate));
 
 	context.subscriptions.push(commands.registerCommand("diplomat-host.force-pull-config", async () => {
@@ -188,7 +212,10 @@ export function activate(context: ExtensionContext) {
 		await updateAnnotation();
 	}));
 
-	context.subscriptions.push(commands.registerCommand("diplomat-host.waves.clear-annotations", () => {window.activeTextEditor?.setDecorations(annotationDecorationType, []);}))
+	context.subscriptions.push(commands.registerCommand("diplomat-host.waves.clear-annotations", () => {
+		currLocationSymbols = null;
+		window.activeTextEditor?.setDecorations(annotationDecorationType, []);
+	}))
 	
 	context.subscriptions.push(commands.registerCommand("diplomat-host.refresh-hierarchy", async () => {
 		dataprovider.refresh();
@@ -201,7 +228,7 @@ export function activate(context: ExtensionContext) {
 		.then(() => { return dataprovider.refresh()});
 	
 	// Elements may use this variable to toggle visibility on extension availability.
-	void commands.executeCommand('setContext', 'diplomat-host:enabled', true)
+	void commands.executeCommand('setContext', 'diplomat-host:enabled', true);
 	console.log('Diplomat activation completed');
 }
 

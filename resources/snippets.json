@@ -28,6 +28,15 @@
 		],
 		"description": "Sequential FF structure"
 	},
+	"Standard combinatorial process" : {
+		"prefix": "comb",
+		"body": [
+			"always_comb begin : p_comb_$1",
+			"   $0",
+			"end"
+		],
+		"description": "Combinatorial block structure"
+	},
 	"Module" : {
 		"prefix": "mod",
 		"body": [

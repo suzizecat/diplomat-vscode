@@ -3,6 +3,8 @@
 ## Added
 
  - Add combinatorial logic snippet (`comb`)
+ - Add case clause snippet (`case`)
+ - Add assign clause snippet (`assign`)
  - Add waveform to editor link (click on waveform show signal in code)
 
 ## Changed

@@ -15,15 +15,23 @@
 		],
 		"description": "Logic output port declaration"
 	},
+	"Logic assignation" : {
+		"prefix": "assign",
+		"body": [
+			"assign $1 = $2;",
+			"$0"
+		],
+		"description": "Direct assignation statement"
+	},
 	"Standard FF process" : {
 		"prefix": "ff",
 		"body": [
 			"always_ff @( posedge i_${1:clk} or negedge i_${2:rst_n} ) begin : p_seq_$3",
-			"    if (~i_$2) begin",
-			"        $4",
-			"    end else begin",
-			"        $0",
-			"    end",
+			"\tif (~i_$2) begin",
+			"\t\t$4",
+			"\tend else begin",
+			"\t\t$0",
+			"\tend",
 			"end"
 		],
 		"description": "Sequential FF structure"
@@ -32,8 +40,22 @@
 		"prefix": "comb",
 		"body": [
 			"always_comb begin : p_comb_$1",
-			"   $0",
+			"\t$0",
 			"end"
+		],
+		"description": "Combinatorial block structure"
+	},
+	"Switch/case clause" : {
+		"prefix": "case",
+		"body": [
+			"case($1)",
+			"\t$2 : begin",
+			"\t\t$0",
+			"\tend",
+			"\tdefault : begin",
+			"\t\t",
+			"\tend",
+			"endcase"
 		],
 		"description": "Combinatorial block structure"
 	},
@@ -41,9 +63,9 @@
 		"prefix": "mod",
 		"body": [
 			"module ${1:$TM_FILENAME_BASE} (",
-			"    $2",
+			"\t$2",
 			");",
-			"    $0",
+			"\t$0",
 			"endmodule",
 			""
 		],
@@ -53,11 +75,11 @@
 		"prefix": "modp",
 		"body": [
 			"module ${1:$TM_FILENAME_BASE} #(",
-			" $2",
+			"\t$2",
 			") (",
-			"    $3",
+			"\t$3",
 			");",
-			"    $0",
+			"\t$0",
 			"endmodule",
 			""
 		],

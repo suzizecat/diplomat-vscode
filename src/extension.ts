@@ -25,13 +25,17 @@ import { DiplomatTestController } from './tests_controller';
 var waveViewer: GTKWaveViewer;
 var currHierLocation: DesignElement | null = null;
 var currLocationSymbols: string[] | null = null;
+var editorFollowsWaveform : boolean = true;
+
 
 export function activate(context: ExtensionContext) {
 	
+	void commands.executeCommand('setContext', 'diplomat-host:followWaveSelection', true)
+
 	const gtkwaveExecutable = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string>("path");
 	const gtkwaveOptions = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string[]>("options");
 	
-	const testController = new DiplomatTestController(context)
+	const testController = new DiplomatTestController(context);
 
 	context.subscriptions.push(testController);
 
@@ -51,6 +55,10 @@ export function activate(context: ExtensionContext) {
 			[key:string] : ( args : Array<any>) => Promise<void>;
 		} = {
 			"select" : async (args : Array<string>) => {
+				// If the feature is disabled, just return without running anything.
+				console.log("Viewer requested selection bind");
+				if(! editorFollowsWaveform)
+					return;
 				const result = await commands.executeCommand<{[key : string] : Location | null}>("diplomat-server.resolve-paths",...args);
 				for (let key in result)
 				{
@@ -153,7 +161,7 @@ export function activate(context: ExtensionContext) {
 		// Display a message box to the user
 		window.showInformationMessage('Hello from diplomat-host!');
 	}));
-
+	559653
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -204,6 +212,19 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand("diplomat-host.show-config", async () => {
 		diplomat.openParameterFile(context);
 	}));
+
+	context.subscriptions.push(commands.registerCommand("diplomat-host.waves.enable-follow", async () => {
+		void commands.executeCommand('setContext', 'diplomat-host:followWaveSelection', true);
+		waveViewer.setWaveFollow(true);
+		editorFollowsWaveform = true;
+	}));
+
+	context.subscriptions.push(commands.registerCommand("diplomat-host.waves.disable-follow", async () => {
+		void commands.executeCommand('setContext', 'diplomat-host:followWaveSelection', false);
+		waveViewer.setWaveFollow(false);
+		
+	}));
+	
 	
 	context.subscriptions.push(commands.registerCommand("diplomat-host.select-hierarchy", async (eltPath: string) => {
 		console.log("Select hierarchy");

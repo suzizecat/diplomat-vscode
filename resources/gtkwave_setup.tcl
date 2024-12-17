@@ -43,12 +43,13 @@ proc tell_selected { } {
 
         if {$flag%2 == 1} {
             if {$name ne $last_selected} {
-                puts "{\"name\":\"select\",\"args\":\[\"$name\"\]}§"
+                puts "{\"name\":\"select\",\"args\":\[\"$name\"\]}"
                 set last_selected $name
             }
             break
         }
     }
+    puts "§"
 }
 
 proc get_signals_values { siglist } {

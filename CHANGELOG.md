@@ -3,6 +3,7 @@
 ## Changed
 
  - Properly extract test messages and report test failure errors
+ - Support waveform to editor link (click on waveform show signal in code)
 
 # 0.2.0 - 2024-12-16
 

@@ -3,7 +3,7 @@
   "displayName": "diplomat-host",
   "description": "",
   "publisher": "jfaucher",
-  "version": "0.2.1-dev.1",
+  "version": "0.3.0-dev.1",
   "repository": {},
   "engines": {
     "vscode": "^1.81.0"
@@ -43,7 +43,17 @@
         {
           "command": "diplomat-host.refresh-hierarchy",
           "when": "view == design-hierarchy",
-          "group": "navigation"
+          "group": "navigation@0"
+        },
+        {
+          "command": "diplomat-host.waves.enable-follow",
+          "when": "view == design-hierarchy && diplomat-host:viewerCanFollowSignal && !diplomat-host:followWaveSelection",
+          "group": "navigation@1"
+        },
+        {
+          "command": "diplomat-host.waves.disable-follow",
+          "when": "view == design-hierarchy && diplomat-host:viewerCanFollowSignal && diplomat-host:followWaveSelection",
+          "group": "navigation@1"
         }
       ],
       "explorer/context": [
@@ -173,7 +183,18 @@
       {
         "command": "diplomat-host.waves.add-signal",
         "title": "Add symbol to waveform"
+      },
+      {
+        "command": "diplomat-host.waves.disable-follow",
+        "title": "Diplomat: Stop following the waveform selection",
+        "icon":"$(lock)"
+      },
+      {
+        "command": "diplomat-host.waves.enable-follow",
+        "title": "Diplomat: Follow waveform selection",
+        "icon":"$(unlock)"
       }
+
     ],
     "languages": [
       {

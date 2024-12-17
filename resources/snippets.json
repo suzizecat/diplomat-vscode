@@ -45,6 +45,33 @@
 		],
 		"description": "Combinatorial block structure"
 	},
+	"If clause" : {
+		"prefix": "if",
+		"body": [
+			"if ($1) begin",
+			"\t$2",
+			"end$0"
+		],
+		"description": "Simple if block"
+	},
+	"Else clause" : {
+		"prefix": "else",
+		"body": [
+			"else begin",
+			"\t$0",
+			"end"
+		],
+		"description": "Simple else block"
+	},
+	"Else if clause" : {
+		"prefix": "elif",
+		"body": [
+			"else if ($1) begin",
+			"\t$2",
+			"end$0"
+		],
+		"description": "Else if block"
+	},
 	"Switch/case clause" : {
 		"prefix": "case",
 		"body": [

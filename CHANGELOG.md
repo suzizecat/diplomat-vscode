@@ -5,6 +5,7 @@
  - Add combinatorial logic snippet (`comb`)
  - Add case clause snippet (`case`)
  - Add assign clause snippet (`assign`)
+ - Add conditional snippets (`if`, `else`, `elif`)
  - Add waveform to editor link (click on waveform show signal in code)
 
 ## Changed

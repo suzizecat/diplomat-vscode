@@ -8,9 +8,15 @@
  - Add conditional snippets (`if`, `else`, `elif`)
  - Add waveform to editor link (click on waveform show signal in code)
 
+## Fixed
+ 
+ - Tentative fix of semi-random failure to automatically load config, refresh or index.
+
 ## Changed
 
  - Properly extract test messages and report test failure errors
+
+
 
 # 0.2.0 - 2024-12-16
 

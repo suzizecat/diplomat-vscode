@@ -161,7 +161,6 @@ export function activate(context: ExtensionContext) {
 		// Display a message box to the user
 		window.showInformationMessage('Hello from diplomat-host!');
 	}));
-	559653
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -248,8 +247,11 @@ export function activate(context: ExtensionContext) {
 	console.log('Starting Diplomat LSP');
 	//outputchan = window.createOutputChannel("[diplomat] Client");
 	diplomat.activateLspClient(context)
-		.then(() => { return diplomat.pushParameters(context) })
-		.then(() => { return dataprovider.refresh()});
+		.then(() => {
+			setTimeout(() => {
+				diplomat.pushParameters(context).then(() => dataprovider.refresh())
+			},500)
+			});
 	
 	// Elements may use this variable to toggle visibility on extension availability.
 	void commands.executeCommand('setContext', 'diplomat-host:enabled', true);

@@ -35,7 +35,7 @@ export function activate(context: ExtensionContext) {
 	const gtkwaveExecutable = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string>("path");
 	const gtkwaveOptions = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string[]>("options");
 	
-	const testController = new DiplomatTestController(context);
+	
 
 	context.subscriptions.push(testController);
 
@@ -151,6 +151,7 @@ export function activate(context: ExtensionContext) {
 	commands.executeCommand('setContext', 'diplomat-host.supportedWavesFiles', waveViewer.supportedExtensions);
 	commands.executeCommand('setContext', 'diplomat-host.supportedDesignFiles', workspace.getConfiguration("diplomatServer.index").get<string[]>("validExtensions"));
 	
+	const testController = new DiplomatTestController(context,waveViewer.refreshWaves);
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand

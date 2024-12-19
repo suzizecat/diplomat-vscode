@@ -63,6 +63,7 @@ abstract class BaseViewer {
     abstract openWave(wavefile: string): void;
     abstract addSignalToWave(signals: string[]): void;
     abstract getSignals(signals: string[]): Promise<SignalData[]>;
+    abstract refreshWaves(): void;
     abstract close(): void;
 
     protected forwardToCallback(data: any) {
@@ -183,18 +184,23 @@ abstract class BaseViewer {
 
 
     protected async sendCommand(cmd: string) {
-        await cmdAccess.use(async () => {await this._lowLevelSendData(cmd);});
+        if (this.running) {
+            await cmdAccess.use(async () => { await this._lowLevelSendData(cmd); });
+        }
     }
 
     protected async exchangeCommand(cmd: string) {
-        
-        return await cmdAccess.use(
-           async () => {
-            await this._lowLevelFlushStdout();
-            await  this._lowLevelSendData(cmd);
-            return await this._lowLevelGetData();
-        });
-        
+        if (this.running) {
+            return await cmdAccess.use(
+                async () => {
+                    await this._lowLevelFlushStdout();
+                    await this._lowLevelSendData(cmd);
+                    return await this._lowLevelGetData();
+                });
+        }
+        else {
+            return Promise.reject("The waveform viewer is not running");
+        }
     }
 
  
@@ -345,6 +351,11 @@ export class GTKWaveViewer extends BaseViewer {
         let result: string = await this.exchangeCommand(`get_signals_values $signals_to_get`);
         console.log(`Got values`)
         return assertEquals<SignalData[]>(JSON.parse(result));
+    }
+
+    public async refreshWaves(): Promise<void> {
+        console.log("Refresh wave display");
+        await this.sendCommand("gtkwave::reLoadFile");
     }
 
     public close() {

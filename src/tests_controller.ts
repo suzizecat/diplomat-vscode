@@ -22,9 +22,11 @@ export class DiplomatTestController {
 		increment?: number;
 	}> | null = null;
 
+	protected postRunCb: () => Promise<void>;
 
-	constructor(context: ExtensionContext) {
+	constructor(context: ExtensionContext, postRunCb : () => Promise<void> = () => Promise.resolve()) {
 		this.context = context;
+		this.postRunCb = postRunCb;
 		this.controller = tests.createTestController('diplomatTests', 'Diplomat Tests');
 		this.controller.resolveHandler = async test => {
 			console.log("Start test resolution");
@@ -64,7 +66,10 @@ export class DiplomatTestController {
 				await this.controller.resolveHandler(undefined);
 		};
 
-		this.controller.createRunProfile("Run Cocotb", TestRunProfileKind.Run, (request, token) => runCocotbHandler(this.controller, request, token), true);
+		this.controller.createRunProfile("Run Cocotb", TestRunProfileKind.Run, (request, token) => {
+			runCocotbHandler(this.controller, request, token);
+			this.postRunCb();
+		}, true);
 	}
 
 	public dispose() {
@@ -386,7 +391,7 @@ export class DiplomatTestController {
 					else
 						effectiveTestsNames.forEach((tname) => { run.errored(testmap[tname], new TestMessage("Malformed results.xml")) });
 				}
-				console.log(resultObj);
+				// console.log(resultObj);
 			}
 		}
 

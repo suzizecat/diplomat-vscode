@@ -37,7 +37,7 @@ export function activate(context: ExtensionContext) {
 	
 	
 
-	context.subscriptions.push(testController);
+
 
 	const annotationDecorationType = window.createTextEditorDecorationType({})
 
@@ -152,6 +152,7 @@ export function activate(context: ExtensionContext) {
 	commands.executeCommand('setContext', 'diplomat-host.supportedDesignFiles', workspace.getConfiguration("diplomatServer.index").get<string[]>("validExtensions"));
 	
 	const testController = new DiplomatTestController(context,waveViewer.refreshWaves);
+	context.subscriptions.push(testController);
 
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
@@ -196,6 +197,15 @@ export function activate(context: ExtensionContext) {
 				logger.warn(`Symbol ${symbolPath} not found in current waveform context.`);
 				console.log(`Symbol ${symbolPath} not found in current waveform context.`);
 			}
+		}
+	}));
+
+
+	context.subscriptions.push(commands.registerCommand("diplomat-host.waves.reload", async () => {
+		logger.info("Requested waveform reload from diplomat-host.");
+		if (waveViewer.running)
+		{
+			waveViewer.refreshWaves();
 		}
 	}));
 

@@ -1,5 +1,6 @@
 
-import {ExtensionContext, FileType, Position, Progress, ProgressLocation, Range, TestController, TestItem, TestMessage, TestRunProfileKind, TestRunRequest, tests, Uri, window, workspace}  from "vscode";
+import * as vscode from 'vscode';
+import { ExtensionContext, FileType, Position, Progress, ProgressLocation, Range, TestController, TestItem, TestMessage, TestRunProfileKind, TestRunRequest, tests, Uri, window, workspace } from "vscode";
 import { TestDiscoveryResults } from "./exchange_types";
 import { spawn, ChildProcess, exec, spawnSync} from 'node:child_process';
 import path = require("node:path");
@@ -221,8 +222,10 @@ export class DiplomatTestController {
 		let testsuites: { [key: string]: string[] } = {};
 		let testErrors: { [key: string]: string[] } = {};
 		let testmap: { [key: string]: TestItem } = {}
-		
+
 		testlist.forEach(test => { testmap[test.parent === undefined ? test.id : test.label] = test; });
+
+		let numberOfTests: number = testlist.length;
 
 		for(let test of testlist)
 		{
@@ -396,4 +399,17 @@ export class DiplomatTestController {
 		}
 
 		run.end();
+
+		let reloadMode = vscode.workspace.getConfiguration("diplomatServer.waveformViewer").get<string>("reloadOnTestEnd");
+
+		if (reloadMode == "always")
+		{
+			vscode.commands.executeCommand("diplomat-host.waves.reload");
+		}
+		else if (reloadMode == "onSingle" && numberOfTests == 1)
+		{
+			vscode.commands.executeCommand("diplomat-host.waves.reload");
+		}
+		// numberOfTests
+
 	}

@@ -103,6 +103,10 @@
         {
           "command": "diplomat-server.push-config",
           "when": "never"
+        },
+        {
+          "command": "diplomat-host.waves.reload",
+          "when": "diplomat-host:viewerEnabled"
         }
       ]
     },
@@ -183,6 +187,10 @@
       {
         "command": "diplomat-host.waves.add-signal",
         "title": "Add symbol to waveform"
+      },
+      {
+        "command": "diplomat-host.waves.reload",
+        "title": "Diplomat: Reload waveform"
       },
       {
         "command": "diplomat-host.waves.disable-follow",
@@ -281,6 +289,17 @@
             "type": "string"
           },
           "default": []
+        },
+        "diplomatServer.waveformViewer.reloadOnTestEnd": {
+          "description": "Automatically reload the waveform viewer at the end of a test if the waveform viewer is opened.",
+          "type": "string",
+          "enum" : ["always","never","onSingle"],
+          "enumItemLabels": [
+            "Always reload",
+            "Never reload",
+            "Reload only if a single testcase has been ran"
+          ],
+          "default": ["onSingle"]
         }
       }
     },

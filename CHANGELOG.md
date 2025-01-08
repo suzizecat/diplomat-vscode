@@ -2,6 +2,7 @@
 
 ## Added
 
+ - Add parameter and commands for auto-reload of waveforms (#6)
  - Add combinatorial logic snippet (`comb`)
  - Add case clause snippet (`case`)
  - Add assign clause snippet (`assign`)
@@ -15,6 +16,7 @@
 ## Changed
 
  - Properly extract test messages and report test failure errors
+ - Fixed server command name for `diplomat-server.list-symbols`
 
 
 

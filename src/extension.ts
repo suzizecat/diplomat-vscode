@@ -102,7 +102,7 @@ export function activate(context: ExtensionContext) {
 			{
 				let designPath = currHierLocation.hierPath;
 				var fileLookup: FileSymbolsLookupResult;
-				commands.executeCommand<FileSymbolsLookupResult>("displomat-server.list-symbols", designPath)
+				commands.executeCommand<FileSymbolsLookupResult>("diplomat-server.list-symbols", designPath)
 					.then((signals) => {
 						fileLookup = signals;
 						currLocationSymbols = Object.keys(signals);

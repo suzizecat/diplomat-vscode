@@ -261,12 +261,12 @@ export function activate(context: ExtensionContext) {
 		.then(() => {
 			setTimeout(() => {
 				diplomat.pushParameters(context).then(() => dataprovider.refresh())
+				// Elements may use this variable to toggle visibility on extension availability.
+				void commands.executeCommand('setContext', 'diplomat-host:enabled', true);
+				console.log('Diplomat activation completed');
 			},500)
 			});
 	
-	// Elements may use this variable to toggle visibility on extension availability.
-	void commands.executeCommand('setContext', 'diplomat-host:enabled', true);
-	console.log('Diplomat activation completed');
 }
 
 

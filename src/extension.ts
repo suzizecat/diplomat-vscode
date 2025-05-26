@@ -8,7 +8,7 @@ import { quickOpen } from './quickOpen';
 import * as diplomat from './diplomatclient';
 import {showInstanciate} from './diplomatclient';
 
-import {GTKWaveViewer} from "./waveform_viewer";
+import {GTKWaveViewer} from "./support_waveform_viewers/gtkwave";
 import { FileSymbolsLookupResult, SignalData, WaveformViewerCbArgs } from './exchange_types';
 import { Location } from 'vscode-languageclient';
 

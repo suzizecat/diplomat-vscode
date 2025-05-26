@@ -3,7 +3,7 @@
   "displayName": "diplomat-host",
   "description": "",
   "publisher": "jfaucher",
-  "version": "0.3.0-dev.4",
+  "version": "0.3.0-dev.7",
   "repository": {},
   "engines": {
     "vscode": "^1.81.0"
@@ -64,12 +64,12 @@
         {
           "command": "diplomat-server.set-top",
           "group": "2_workspace",
-          "when": "resourceExtname in diplomat-host.supportedDesignFiles"
+          "when": "resourceExtname in diplomat-host:supportedDesignFiles"
         },
         {
           "command": "diplomat-host.open-waves",
           "group": "navigation",
-          "when": "resourceExtname in diplomat-host.supportedWavesFiles"
+          "when": "resourceExtname in diplomat-host:supportedWavesFiles"
         }
       ],
       "editor/context": [

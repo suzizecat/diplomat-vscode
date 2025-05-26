@@ -1,6 +1,6 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
-import { window, commands, ExtensionContext, workspace, Uri, Range, Selection, DecorationOptions } from 'vscode';
+import { window, commands, ExtensionContext, workspace, Uri, Range, Selection, DecorationOptions, LogOutputChannel } from 'vscode';
 import { showQuickPick, showInputBox } from './basicInput';
 import { multiStepInput } from './multiStepInput';
 import { quickOpen } from './quickOpen';
@@ -27,18 +27,31 @@ var currHierLocation: DesignElement | null = null;
 var currLocationSymbols: string[] | null = null;
 var editorFollowsWaveform : boolean = true;
 
+var logger : LogOutputChannel;
+
 
 export function activate(context: ExtensionContext) {
 	
-	void commands.executeCommand('setContext', 'diplomat-host:followWaveSelection', true)
+	// ########################################################################
+	// Logger setup
+	// ########################################################################
+	logger = window.createOutputChannel("[diplomat] Host", { log: true });
+	context.subscriptions.push(commands.registerCommand('diplomat-host.private.get-logger',() => {return logger;}));
 
+	// ########################################################################
+	// Context setup
+	// ########################################################################
+	commands.executeCommand('setContext', 'diplomat-host:followWaveSelection', true)
+	commands.executeCommand('setContext', 'diplomat-host:supportedDesignFiles', workspace.getConfiguration("diplomatServer.index").get<string[]>("validExtensions"));
+	commands.executeCommand("setContext", "diplomat-host:viewerEnabled", false);
+
+	
 	const gtkwaveExecutable = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string>("path");
 	const gtkwaveOptions = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string[]>("options");
-	
-	
 
-
-
+	/**
+	 * Decoration used for value annotation from the waveform viewer
+	 */
 	const annotationDecorationType = window.createTextEditorDecorationType({})
 
 	if (!gtkwaveExecutable) {
@@ -48,7 +61,7 @@ export function activate(context: ExtensionContext) {
 		throw new Error("`DiplomatServer.tools.GTKWave.options` is not set");
 	}
 	
-	const logger = window.createOutputChannel("[diplomat] Host", { log: true });
+	
 
 	const forwardViewerCommands = async (args: WaveformViewerCbArgs) => {
 		let fcts : {
@@ -56,7 +69,7 @@ export function activate(context: ExtensionContext) {
 		} = {
 			"select" : async (args : Array<string>) => {
 				// If the feature is disabled, just return without running anything.
-				console.log("Viewer requested selection bind");
+				logger.debug("Viewer requested selection bind");
 				if(! editorFollowsWaveform)
 					return;
 				const result = await commands.executeCommand<{[key : string] : Location | null}>("diplomat-server.resolve-paths",...args);
@@ -65,7 +78,7 @@ export function activate(context: ExtensionContext) {
 					const value = result[key];
 					if(value !== null)
 					{
-						console.log(`Open file ${value.uri}`);
+						logger.trace(`Open file ${value.uri}`);
 						workspace.openTextDocument(Uri.parse(value.uri))
 						.then(doc =>  {window.showTextDocument(doc)
 							.then(editor => {
@@ -148,24 +161,11 @@ export function activate(context: ExtensionContext) {
 	waveViewer.verboseLog = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<boolean>("verbose",true);
 	context.subscriptions.push(waveViewer);
 	
-	commands.executeCommand('setContext', 'diplomat-host.supportedWavesFiles', waveViewer.supportedExtensions);
-	commands.executeCommand('setContext', 'diplomat-host.supportedDesignFiles', workspace.getConfiguration("diplomatServer.index").get<string[]>("validExtensions"));
+	commands.executeCommand('setContext', 'diplomat-host:supportedWavesFiles', waveViewer.supportedExtensions);
 	
 	const testController = new DiplomatTestController(context,waveViewer.refreshWaves);
 	context.subscriptions.push(testController);
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	context.subscriptions.push(commands.registerCommand('diplomat-host.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		
-		// Display a message box to the user
-		window.showInformationMessage('Hello from diplomat-host!');
-	}));
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
 	
 	let dataprovider = new DesignHierarchyTreeProvider();
 
@@ -273,5 +273,6 @@ export function activate(context: ExtensionContext) {
 // this method is called when your extension is deactivated
 export function deactivate() {
 	console.log('Diplomat extension is being disabled. Bye !');
-	
+	commands.executeCommand('setContext', 'diplomat-host:enabled', false);
+
 }

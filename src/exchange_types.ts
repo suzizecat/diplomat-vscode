@@ -3,12 +3,22 @@
 import * as lsp from "vscode-languageclient";
 
 
+
+/**
+ * Represents the configuration of a diplomat workspace, exchanged with 
+ * diplomat LSP.
+ */
 export type DiplomatConfig = {
-    workspaceDirs: Array<string>,
+    workspaceDirs: Array<string>, 
     excludedPaths: Array<string>,
+    excludedPatterns: Array<string>,
+    excludedRegex : Array<string>,
+    topLevel : string,
+    includeDirs : Array<string>,
     excludedDiags: Array<{subsystem : number, code : number}>
 };
   
+
 export type WaveformViewerCbArgs = {
   name: string,
   args: Array<any>

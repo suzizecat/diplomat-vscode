@@ -9,35 +9,79 @@ import Semaphore = require('ts-semaphore');
 
 import { SignalData, WaveformViewerCbArgs } from '../exchange_types';
 
-const  cmdAccess = new Semaphore(1);
+// const  cmdAccess = new Semaphore(1);
 
-
+/**
+ * This class is responsible for providing the high-level interfaces
+ * and requirements to provide support for a waveform viewer in Diplomat Host.
+ * 
+ * This class also provides base functions to help such implementation and define
+ * basic behavior.
+ */
 export abstract class BaseViewer {
 
+
+    /** Holds the process object (if any) that will be used to hold the viewer. */
     protected viewerProcess: null | ChildProcess = null;
+    /** List of arguments used to spawn the viewer process */
     protected spawnArgs: Array<string>;
+    /** Base command to run in order to start the viewer */
     protected executable: string
+    /** List of all extensions supported by the viewer */
     protected validWavesExtension: Array<string>;
+    /** Extension context, propagated to the viewer manager */
     protected context: ExtensionContext;
 
+    /** Holds the internal capability related to following signals */
     protected _followWavesEnabled : boolean = false;
-    protected setupDone : boolean = false; // Is set to true to avoid calling setup multiple time.
+    /** Is set to true to avoid calling setup multiple time. */
+    protected setupDone : boolean = false; 
+    /** Is used to provide the capability of following signals in overriden managers */
     public abstract readonly canFollowWaveSelection : boolean;
     
-    public events = new EventEmitter(); //! Events used to interface with the viewer.
+    /** Events used to interface with the viewer. */
+    public events = new EventEmitter(); 
 
-
+    /** 
+     * Promise that resolved once the viewer is closed.
+     * Should be an already resolved promise if no viewer is open.
+     */
     protected viewerClosed: Promise<void> = Promise.resolve();
 
     public verboseLog: boolean = false;
 
+    /**
+     * Holder for periodic calls related to the viewer.
+     * The manager will dispose of all the periodic calls upon destruction.
+     * 
+     * @see {@link addPeriodicCommand} to store periodic calls.
+     * @see {@link stopAllPeriodic} to dispose of the periodic calls.
+     */
     private periodicCalls: NodeJS.Timeout[] = []
-    protected llGetRemaining: string = "";
 
-    //private cmdAccess = new Semaphore(1);
+    /**
+     * This semaphore ensures that only one command has access to the 
+     * actual viewer, assuming that the connexion is made 
+     * through STDIO.
+     */
+    private cmdAccess = new Semaphore(1);
 
+    /**
+     * Command that is called upon receiving an element from the viewer.
+     * This allows interactions initiated by the viewer.
+     * 
+     * The supported commands are defined by stdoutCb rather than the viewer.
+     */
     protected stdoutCb: (args: WaveformViewerCbArgs) => Promise<void>;
 
+    /**
+     * 
+     * @param context Extension context to work on
+     * @param execPath Waveform viewer execution path/command, without arguments
+     * @param execArgs List of arguments to use
+     * @param stdoutCallBack Callback to use when the viewer provides commands
+     * @param validWavesFiles List of valid waveform files extensions.
+     */
     constructor(context: ExtensionContext, execPath: string, execArgs: Array<string>, stdoutCallBack: (args: WaveformViewerCbArgs) => Promise<void>, validWavesFiles: string[] = []) {
         this.executable = execPath;
         this.spawnArgs = execArgs;
@@ -102,7 +146,6 @@ export abstract class BaseViewer {
 
         await this.viewerClosed;
         // Disable all context
-        this.llGetRemaining = "";
         commands.executeCommand("setContext", "diplomat-host:viewerEnabled", false);
     }
 
@@ -183,13 +226,13 @@ export abstract class BaseViewer {
 
     protected async sendCommand(cmd: string) {
         if (this.running) {
-            await cmdAccess.use(async () => { await this._lowLevelSendData(cmd); });
+            await this.cmdAccess.use(async () => { await this._lowLevelSendData(cmd); });
         }
     }
 
     protected async exchangeCommand(cmd: string) {
         if (this.running) {
-            return await cmdAccess.use(
+            return await this.cmdAccess.use(
                 async () => {
                     await this._lowLevelFlushStdout();
                     await this._lowLevelSendData(cmd);

@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import path = require('node:path');
 
 import { commands, workspace } from 'vscode';
@@ -12,9 +12,6 @@ export class GTKWaveViewer extends BaseViewer {
 
     public readonly canFollowWaveSelection : boolean = true;
 
-    /**
-     * openWave
-     */
 
 
     // protected setUpCapabilities() {

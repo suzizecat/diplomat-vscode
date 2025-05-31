@@ -1,4 +1,4 @@
-# Changelog
+# 0.3.0 - 2025-05-31
 
 ## Added
 
@@ -17,7 +17,7 @@
 
  - Properly extract test messages and report test failure errors
  - Fixed server command name for `diplomat-server.list-symbols`
-
+ - Moved the waveform viewer code to a separate folder
 
 
 # 0.2.0 - 2024-12-16

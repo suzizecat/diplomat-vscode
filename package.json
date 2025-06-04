@@ -34,7 +34,17 @@
           "id": "design-hierarchy",
           "name": "Hierarchy",
           "contextualTitle": "Design Hierarchy Explorer",
-          "when": "diplomat-host:enabled"
+          "when": "diplomat-host:enabled",
+          "icon": "$(symbol-class)"
+        }
+      ],
+      "explorer": [
+        {
+          "id": "diplomat-prj",
+          "name" : "Projects",
+          "when": "diplomat-host:enabled",
+          "contextualTitle": "Diplomat project viewer",
+          "icon": "$(symbol-class)"
         }
       ]
     },
@@ -208,6 +218,7 @@
       {
         "id": "systemverilog",
         "aliases": [
+          "SystemVerilog",
           "System Verilog",
           "systemverilog"
         ],
@@ -349,6 +360,7 @@
     "ts-semaphore": "1.0.0",
     "typia": "~6.5.4",
     "fast-xml-parser": "~4.4.1",
-    "vscode-languageclient": "8.2.0-next.0"
+    "vscode-languageclient": "8.2.0-next.0",
+    "vscode-uri": "^3.1.0"
   }
 }

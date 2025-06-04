@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-import { HierarchyRecord } from './exchange_types';
-import { Command } from 'vscode-languageclient';
+import { HierarchyRecord } from '../exchange_types';
 
 
 export class DesignElement extends vscode.TreeItem {

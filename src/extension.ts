@@ -9,14 +9,15 @@ import * as diplomat from './diplomatclient';
 import {showInstanciate} from './diplomatclient';
 
 import {GTKWaveViewer} from "./support_waveform_viewers/gtkwave";
-import { FileSymbolsLookupResult, SignalData, WaveformViewerCbArgs } from './exchange_types';
+import { DiplomatProject, FileSymbolsLookupResult, SignalData, WaveformViewerCbArgs } from './exchange_types';
 import { Location } from 'vscode-languageclient';
 
-import { DesignElement, DesignHierarchyTreeProvider } from "./designExplorerPanel";
+import { DesignElement, DesignHierarchyTreeProvider } from "./gui/designExplorerPanel";
 
 import { TextAnnotator } from './text_annotator';
 
 import { DiplomatTestController } from './tests_controller';
+import { ProjectFileTreeProvider } from './gui/project_files_view';
 //import * as globalvar from "./global";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -167,9 +168,21 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(testController);
 
 	
-	let dataprovider = new DesignHierarchyTreeProvider();
+	let designHierarchyDataProvider = new DesignHierarchyTreeProvider();
+	window.createTreeView("design-hierarchy",{treeDataProvider: designHierarchyDataProvider});
 
-	window.createTreeView("design-hierarchy",{treeDataProvider: dataprovider});
+	let projectDataProvider = new ProjectFileTreeProvider();
+	window.createTreeView("diplomat-prj", {treeDataProvider: projectDataProvider,dragAndDropController:projectDataProvider});
+
+	let demoPrj : DiplomatProject = {name : "Demo project",
+		topLevel: "demo_top",
+		sourceList : ["toto/demo_top.sv","tata/tutu/demo_sub.sv","rtl/top/core_top.sv"],
+		active : true
+	}
+
+	projectDataProvider.processProject(demoPrj);
+	projectDataProvider.refresh();
+
 
 	console.log('Adding some commands...');
 	context.subscriptions.push(commands.registerCommand("diplomat-host.open-waves", async (args : Uri) => {
@@ -238,7 +251,7 @@ export function activate(context: ExtensionContext) {
 	
 	context.subscriptions.push(commands.registerCommand("diplomat-host.select-hierarchy", async (eltPath: string) => {
 		console.log("Select hierarchy");
-		currHierLocation = dataprovider.findElement(eltPath);
+		currHierLocation = designHierarchyDataProvider.findElement(eltPath);
 		await updateAnnotation();
 	}));
 
@@ -252,7 +265,7 @@ export function activate(context: ExtensionContext) {
 	}))
 	
 	context.subscriptions.push(commands.registerCommand("diplomat-host.refresh-hierarchy", async () => {
-		dataprovider.refresh();
+		designHierarchyDataProvider.refresh();
 	}));
 
 	console.log('Starting Diplomat LSP');
@@ -260,7 +273,7 @@ export function activate(context: ExtensionContext) {
 	diplomat.activateLspClient(context)
 		.then(() => {
 			setTimeout(() => {
-				diplomat.pushParameters(context).then(() => dataprovider.refresh())
+				diplomat.pushParameters(context).then(() => designHierarchyDataProvider.refresh())
 				// Elements may use this variable to toggle visibility on extension availability.
 				void commands.executeCommand('setContext', 'diplomat-host:enabled', true);
 				console.log('Diplomat activation completed');

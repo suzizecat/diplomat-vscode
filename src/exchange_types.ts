@@ -18,6 +18,18 @@ export type DiplomatConfig = {
     excludedDiags: Array<{subsystem : number, code : number}>
 };
   
+export type DiplomatProject = {
+  /** Name of the top-level entity if any */
+  topLevel : string | null;
+  /** Name of the project */
+  name : string;
+  /** List of all source files in the project */
+  sourceList : string[];
+
+  /** Active state of the project */
+  active : boolean;
+
+}
 
 export type WaveformViewerCbArgs = {
   name: string,

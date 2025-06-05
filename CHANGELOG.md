@@ -1,5 +1,13 @@
 # Changelog
 
+## WIP
+
+ - Add support for projects within workspace
+
+## Added 
+
+ - Add verilog as supported languages (with SV syntax highlight)
+
 # 0.3.0 - 2025-05-31
 
 ## Added

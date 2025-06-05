@@ -227,7 +227,18 @@
           ".SV",
           ".svh",
           ".SVH",
-          ".svi"
+          ".svi",
+          ".v"
+        ],
+        "configuration": "./configs/systemverilog.configuration.json"
+      },
+      {
+        "id": "verilog",
+        "aliases": [
+          "Verilog"
+        ],
+        "extensions": [
+          ".v"
         ],
         "configuration": "./configs/systemverilog.configuration.json"
       }
@@ -236,12 +247,21 @@
       {
         "language": "systemverilog",
         "path": "./resources/snippets.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./resources/snippets.json"
       }
     ],
     "grammars": [
       {
         "language": "systemverilog",
         "scopeName": "source.systemverilog",
+        "path": "./syntaxes/systemverilog.tmLanguage.json"
+      },
+      {
+        "language": "verilog",
+        "scopeName": "source.verilog",
         "path": "./syntaxes/systemverilog.tmLanguage.json"
       }
     ],

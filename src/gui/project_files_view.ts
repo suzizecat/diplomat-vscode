@@ -361,7 +361,8 @@ export class ProjectFile extends ProjectElement {
 export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectElement>, vscode.TreeDragAndDropController<ProjectElement> {
 	
 
-	protected static SVExtensions : string[] = getFileExtensionsForLanguageId("systemverilog");
+	protected static SVExtensions : string[] = 
+		getFileExtensionsForLanguageId("systemverilog").concat(getFileExtensionsForLanguageId("verilog"));
 	
 
 	public static readonly workspaceBaseUri : vscode.Uri | null = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : null;
@@ -453,7 +454,6 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 			await this.addFileToProject(root.id,usedUri);
 
 		}
-		
 		
 	}
 	

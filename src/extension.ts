@@ -176,7 +176,7 @@ export function activate(context: ExtensionContext) {
 
 	let demoPrj : DiplomatProject = {name : "Demo project",
 		topLevel: "demo_top",
-		sourceList : ["rtl/top/core_top.sv"], //"toto/demo_top.sv","tata/tutu/demo_sub.sv",
+		sourceList : [], //"toto/demo_top.sv","tata/tutu/demo_sub.sv",
 		active : true
 	}
 

@@ -7,6 +7,12 @@ import { getFileExtensionsForLanguageId } from '../utils';
 
 // type ProjectElement = ProjectFolder | ProjectFile;
 
+export enum ProjectFileKind {
+	Source,
+	Test,
+	Other
+}
+
 abstract class ProjectElement extends vscode.TreeItem
 {
 	public id : string = "";
@@ -130,10 +136,10 @@ abstract class ProjectElement extends vscode.TreeItem
 	 * @param v URI to lookup
 	 * @returns The project element nearest to the target URI. 
 	 */
-	public lookupUri(v : vscode.Uri) : ProjectElement | null 
+	public lookupUri(v : vscode.Uri, thisDefaultUri ?: vscode.Uri) : ProjectElement | null 
 	{
 
-		let thisUri = this.resourceUri ? this.resourceUri : ProjectFolder.workspaceBaseUri;
+		let thisUri = this.resourceUri ? this.resourceUri : (thisDefaultUri ? thisDefaultUri :ProjectFolder.workspaceBaseUri);
 		if(! thisUri || ! v)
 			return null;
 
@@ -184,10 +190,14 @@ abstract class ProjectElement extends vscode.TreeItem
 		let thisPath : string = thisUri.fsPath;
 		let tgtPath : string = v.fsPath;
 
-		if(! tgtPath.startsWith(thisPath))
-			return this;
+		let remainingPath : string;
+		// If the path is unrelated to the workspace, keep it as-is to build 
+		// the full path
+		if(tgtPath.startsWith(thisPath))
+			remainingPath = path.relative(thisPath,path.dirname(tgtPath));
+		else 
+			remainingPath = path.dirname(tgtPath);
 
-		let remainingPath = path.relative(thisPath,path.dirname(tgtPath));
 		let neededFolders = remainingPath.split(path.sep).reverse();
 
 		// If remaining path is empty, needed folder will be ['']
@@ -196,9 +206,25 @@ abstract class ProjectElement extends vscode.TreeItem
 			return this;
 		if(neededFolders.at(-1) == "..")
 			return this;
-		
+
+
 		let retFolder : ProjectElement = this;
 		let tgtUri = thisUri;
+
+		if(remainingPath.startsWith("/"))
+		{
+			// If we have an absolute path
+			// The first element of remaining folders will be an empty string, that we remove.
+			neededFolders.pop();
+			tgtUri = vscode.Uri.file("/");
+
+			// Here, we are dealing with the first level of an absolute path.
+			// We need to force the current location (expected a virtual top level)
+			// as a return, otherwise we will infinitely recurse
+			if(neededFolders.length == 1)
+				return this;
+		}
+		
 
 		while(neededFolders.length > 0)
 		{
@@ -336,6 +362,8 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 	
 
 	protected static SVExtensions : string[] = getFileExtensionsForLanguageId("systemverilog");
+	
+
 	public static readonly workspaceBaseUri : vscode.Uri | null = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : null;
 	
 	dropMimeTypes = ['text/uri-list'];
@@ -343,27 +371,10 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 	public roots : Map<string,ProjectFolder> = new Map();
 	public registeredProjects : Map<string, DiplomatProject> = new Map();
 	
-	/**
-	* Produces all virtual folder used later on in the hierarchy.
-	* 
-	* @param parent Potential parent to the various virtual folders
-	* @returns The virtual folders.
-	* 
-	* @example
-	* ```typescript
-	* let root = new ProjectFolder("My-Project");
-	* root.children = ProjectFileTreeProvider.projectVirtualFolders();
-	* ``` 
-	*/
-	static projectVirtualFolders(parent ?: ProjectFolder) : ProjectFolder[]
+
+	static addExternalFolder(parent : ProjectElement) : ProjectFolder
 	{
-		let ret = new Array<ProjectFolder>();
-		
-		ret.push(new ProjectFolder("Sources","src",parent,undefined,vscode.TreeItemCollapsibleState.Collapsed));
-		ret.push(new ProjectFolder("Tests", "tst" ,parent,undefined,vscode.TreeItemCollapsibleState.Collapsed));
-		ret.push(new ProjectFolder("Others", "other" ,parent,undefined,vscode.TreeItemCollapsibleState.Collapsed));
-		
-		return ret;
+		return new ProjectFolder("External","ext",parent,undefined,vscode.TreeItemCollapsibleState.None)
 	}
 	
 	constructor() {}
@@ -394,12 +405,6 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 			return;
 		let droppedUri : vscode.Uri[] = items.split("\r\n").map((v) => {return vscode.Uri.parse(v);});
 
-
-		dataTransfer.forEach((item, mime, dtransfer) => {
-			let ressourceUri : vscode.Uri = vscode.Uri.parse(item.value);
-			droppedUri.push(ressourceUri);
-		})
-
 		for(let uri of droppedUri)
 		{
 			await this.addFileToProject(prjName,uri);
@@ -416,7 +421,7 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 	* Don't forget to call {@link refresh} after.
 	*
 	*/
-	public processProject(prj : DiplomatProject) {
+	public async processProject(prj : DiplomatProject) {
 		console.log(`Starting handling project ${prj.name}...`);
 		if(this.registeredProjects.has(prj.name))
 			this.removeProject(prj.name);
@@ -424,14 +429,8 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 		
 		this.registeredProjects.set(prj.name,prj);
 		let root = new ProjectFolder(prj.name,prj.name);
-
-		
-		ProjectFileTreeProvider.projectVirtualFolders(root);
-		
-		let sources = root.getChildByLocName("src");
-		if(! (sources instanceof ProjectFolder))
-			throw Error("Source folder ID is not src or it returned a file instead of a folder.");
-		
+		this.roots.set(root.id,root);
+			
 		
 		for(let file of prj.sourceList)
 		{
@@ -451,14 +450,18 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 				
 			}
 
-			new ProjectFile(usedUri,sources);
+			await this.addFileToProject(root.id,usedUri);
+
 		}
 		
-		this.roots.set(root.id,root);
+		
 	}
 	
 	public async addFileToProject(prj : string, fpath : vscode.Uri) : Promise<ProjectFile>
 	{
+		if(! ProjectFileTreeProvider.workspaceBaseUri)
+			throw Error("A workspace shall be opened beforehand.");
+
 		console.log(`Add file to project ${prj} : ${fpath.fsPath}`);
 		let stats = await vscode.workspace.fs.stat(fpath);
 		if(stats.type != vscode.FileType.File )
@@ -474,12 +477,14 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 			return Promise.reject();
 		}
 	
-		let destination : ProjectElement | null | undefined; 
+		let destination : ProjectElement; 
+		let isExternal : boolean = ! fpath.path.startsWith(ProjectFileTreeProvider.workspaceBaseUri.path);
+
 
 		if(ProjectFileTreeProvider.SVExtensions.includes(path.extname(fpath.path)))
-			destination = root?.getChildByLocName("src");
+			destination = this.getProjectBaseDirForFileKind(root, ProjectFileKind.Source, isExternal);
 		else 
-			destination = root?.getChildByLocName("other");
+			destination = this.getProjectBaseDirForFileKind(root, ProjectFileKind.Other, isExternal);
 
 		if(! (destination instanceof ProjectFolder))
 		{
@@ -487,17 +492,56 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 			return Promise.reject();
 		}
 
-		let nearest = destination.lookupUri(fpath);
+	
+		let nearest = destination.lookupUri(fpath, isExternal ? vscode.Uri.file("/") : undefined);
 		// If already exists, get out.
 		if(nearest?.resourceUri?.path === fpath.path)
 			return Promise.reject(nearest);
 		if(! nearest)
 			nearest = destination;
 
+
 		let ret = new ProjectFile(fpath,nearest);
 		
 		this.refresh();
 		return Promise.resolve(ret);
+	}
+
+	protected getProjectBaseDirForFileKind(prjRoot : ProjectElement, kind : ProjectFileKind, external : boolean = false)
+	{
+		let ret : ProjectElement | null;
+		switch(kind)
+		{
+			case ProjectFileKind.Source :
+				ret = prjRoot.getChildByLocName("src");
+				if(! ret)
+					ret = new ProjectFolder("Sources","src",prjRoot,undefined,vscode.TreeItemCollapsibleState.Collapsed);
+				break;
+
+			case ProjectFileKind.Test :
+				ret = prjRoot.getChildByLocName("tst");
+				if(! ret)
+					ret = new ProjectFolder("Tests","tst",prjRoot,undefined,vscode.TreeItemCollapsibleState.Collapsed);
+				break;
+
+			case ProjectFileKind.Other:
+			default:
+				ret = prjRoot.getChildByLocName("misc");
+				if(! ret)
+					ret = new ProjectFolder("Others","misc",prjRoot,undefined,vscode.TreeItemCollapsibleState.Collapsed);
+				break;
+		}
+
+		if(external)
+		{
+			let ext = ret.getChildByLocName("ext");
+			if(ext)
+				ret = ext;
+			else
+				ret = new ProjectFolder("External","ext",ret,undefined,vscode.TreeItemCollapsibleState.Collapsed);
+		}
+
+		return ret;
 	}
 
 	public removeProject(prjName : string) {

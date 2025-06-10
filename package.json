@@ -15,7 +15,8 @@
     "Linters"
   ],
   "activationEvents": [
-    "onLanguage:systemverilog"
+    "onLanguage:systemverilog",
+    "onLanguage:verilog"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -219,12 +220,31 @@
           ".svi"
         ],
         "configuration": "./configs/systemverilog.configuration.json"
+      },
+      {
+        "id": "verilog",
+        "aliases": [
+          "Verilog",
+          "verilog"
+        ],
+        "extensions": [
+          ".v",
+          ".V",
+          ".vh",
+          ".VH",
+          ".vi"
+        ],
+        "configuration": "./configs/verilog.configuration.json"
       }
     ],
     "snippets": [
       {
         "language": "systemverilog",
         "path": "./resources/snippets.json"
+      },
+      {
+        "language": "verilog",
+        "path": "./resources/snippets_verilog.json"
       }
     ],
     "grammars": [
@@ -232,6 +252,11 @@
         "language": "systemverilog",
         "scopeName": "source.systemverilog",
         "path": "./syntaxes/systemverilog.tmLanguage.json"
+      },
+      {
+        "language": "verilog",
+        "scopeName": "source.verilog",
+        "path": "./syntaxes/verilog.tmLanguage.json"
       }
     ],
     "configuration": {
@@ -326,7 +351,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "yj": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json",
+    "yj": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json && js-yaml ./syntaxes/verilog.tmLanguage.yaml >./syntaxes/verilog.tmLanguage.json",
     "compile": "npm run yj && tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",

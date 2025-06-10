@@ -1,0 +1,118 @@
+{
+	"Logic input" : {
+		"prefix": "in",
+		"body":  [
+			"input $2 i_$1,",
+			"$0"
+		],
+		"description": "Input port declaration"
+	},
+	"Logic output" : {
+		"prefix": "out",
+		"body": [
+			"output $2 o_$1,",
+			"$0"
+		],
+		"description": "Output port declaration"
+	},
+	"Logic assignation" : {
+		"prefix": "assign",
+		"body": [
+			"assign $1 = $2;",
+			"$0"
+		],
+		"description": "Direct assignment statement"
+	},
+	"Standard posedge clk process" : {
+		"prefix": "ff",
+		"body": [
+			"always @(posedge clk) begin : p_seq_$3",
+			"\tif (~i_$2) begin",
+			"\t\t$4",
+			"\tend else begin",
+			"\t\t$0",
+			"\tend",
+			"end"
+		],
+		"description": "Sequential FF structure"
+	},
+	"Standard Combinational process" : {
+		"prefix": "comb",
+		"body": [
+			"always @(*) begin : p_comb_$1",
+			"\t$0",
+			"end"
+		],
+		"description": "Combinational block structure"
+	},
+	"If clause" : {
+		"prefix": "if",
+		"body": [
+			"if ($1) begin",
+			"\t$2",
+			"end$0"
+		],
+		"description": "Simple if block"
+	},
+	"Else clause" : {
+		"prefix": "else",
+		"body": [
+			"else begin",
+			"\t$0",
+			"end"
+		],
+		"description": "Simple else block"
+	},
+	"Else if clause" : {
+		"prefix": "elif",
+		"body": [
+			"else if ($1) begin",
+			"\t$2",
+			"end$0"
+		],
+		"description": "Else if block"
+	},
+	"Switch/case clause" : {
+		"prefix": "case",
+		"body": [
+			"case($1)",
+			"\t$2 : begin",
+			"\t\t$0",
+			"\tend",
+			"\tdefault : begin",
+			"\t\t",
+			"\tend",
+			"endcase"
+		],
+		"description": "Combinatorial block structure"
+	},
+	"Module" : {
+		"prefix": "mod",
+		"body": [
+			"module ${1:$TM_FILENAME_BASE} (",
+			"\t$2",
+			");",
+			"\t$0",
+			"endmodule",
+			""
+		],
+		"description": "Module declaration"
+	},
+	"Module Parameters" : {
+		"prefix": "modp",
+		"body": [
+			"module ${1:$TM_FILENAME_BASE} #(",
+			"\t$2",
+			") (",
+			"\t$3",
+			");",
+			"\t$0",
+			"endmodule",
+			""
+		],
+		"description": "Module declaration with parameters"
+	}
+
+
+}
+

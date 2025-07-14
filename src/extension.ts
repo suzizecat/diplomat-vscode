@@ -9,7 +9,7 @@ import * as diplomat from './diplomatclient';
 import {showInstanciate} from './diplomatclient';
 
 import {GTKWaveViewer} from "./support_waveform_viewers/gtkwave";
-import { DiplomatProject, FileSymbolsLookupResult, SignalData, WaveformViewerCbArgs } from './exchange_types';
+import { DiplomatProject, FileSymbolsLookupResult, SignalData, WaveformViewerCbArgs, ModuleBlackBox } from './exchange_types';
 import { Location } from 'vscode-languageclient';
 
 import { DesignElement, DesignHierarchyTreeProvider } from "./gui/designExplorerPanel";
@@ -17,7 +17,8 @@ import { DesignElement, DesignHierarchyTreeProvider } from "./gui/designExplorer
 import { TextAnnotator } from './text_annotator';
 
 import { DiplomatTestController } from './tests_controller';
-import { ProjectFileTreeProvider } from './gui/project_files_view';
+import { ProjectElement, ProjectFile, ProjectFileTreeProvider } from './gui/project_files_view';
+import { DiplomatWorkspace } from './workspace_management/diplomat_workspace';
 //import * as globalvar from "./global";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -171,20 +172,12 @@ export function activate(context: ExtensionContext) {
 	let designHierarchyDataProvider = new DesignHierarchyTreeProvider();
 	window.createTreeView("design-hierarchy",{treeDataProvider: designHierarchyDataProvider});
 
-	let projectDataProvider = new ProjectFileTreeProvider();
-	window.createTreeView("diplomat-prj", {treeDataProvider: projectDataProvider,dragAndDropController:projectDataProvider});
-
-	let demoPrj : DiplomatProject = {name : "Demo project",
-		topLevel: "demo_top",
-		sourceList : [], //"toto/demo_top.sv","tata/tutu/demo_sub.sv",
-		active : true
-	}
-
-	projectDataProvider.processProject(demoPrj);
-	projectDataProvider.refresh();
-
-
+	let diplomatWorkspace = new DiplomatWorkspace(context);
+	window.createTreeView("diplomat-prj", diplomatWorkspace.treeViewProvider);
+	diplomatWorkspace.openProjectFromConfig();
+	
 	console.log('Adding some commands...');
+	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.create-project", async (name ?:string ) => diplomatWorkspace.addProject(name))); 
 	context.subscriptions.push(commands.registerCommand("diplomat-host.open-waves", async (args : Uri) => {
 		console.log("Opening waveform...");
 		waveViewer.openWave(args.fsPath);
@@ -225,7 +218,8 @@ export function activate(context: ExtensionContext) {
 	context.subscriptions.push(commands.registerCommand('diplomat-host.instanciate',showInstanciate));
 
 	context.subscriptions.push(commands.registerCommand("diplomat-host.force-pull-config", async () => {
-		diplomat.pullParameters(context);
+		diplomatWorkspace.saveConfig();
+		//diplomat.pullParameters(context);
 	}));
 
 	context.subscriptions.push(commands.registerCommand("diplomat-host.force-push-config", async () => {
@@ -268,16 +262,76 @@ export function activate(context: ExtensionContext) {
 		designHierarchyDataProvider.refresh();
 	}));
 
+	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.remove-file", async (target ?: ProjectElement) => {
+		if(target)
+		{
+			diplomatWorkspace.removeProjectElement(target);
+		}
+	}));
+
+	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.set-project", async (target ?: ProjectElement) => {
+		
+		diplomatWorkspace.setActiveProject(target);
+		diplomatWorkspace.sendProjectToLSP(target);
+	}));
+
+	context.subscriptions.push(commands.registerCommand("diplomat-host.set-top", async(file : Uri | ProjectFile) => {
+
+		let tgt_uri : Uri;
+		if(file instanceof ProjectFile)
+		{
+			tgt_uri = file.resourceUri;
+		}
+		else
+		{
+			tgt_uri = file;
+		}
+
+		let bbs : Array<ModuleBlackBox> = await commands.executeCommand<ModuleBlackBox[]>("diplomat-server.get-file-bbox",tgt_uri.toString());
+		let newTop : string | undefined;
+		if(bbs.length == 0)
+		{
+			window.showWarningMessage(`No module found in ${tgt_uri.fsPath}`);
+			return Promise.reject()
+		}
+		else if(bbs.length > 1)
+		{
+			newTop = await window.showQuickPick(bbs.map((elt) => {return elt.module}));
+			
+		}
+		else
+		{
+			newTop = bbs.at(0)?.module;
+		}
+		
+		if(newTop)
+		{
+			await commands.executeCommand("diplomat-server.set-top",newTop);
+			window.showInformationMessage(`New top is ${newTop}`);
+		}
+		else
+		{
+			window.showInformationMessage("No top-module selected (nothing has been done).");
+		}
+
+	}))
+
 	console.log('Starting Diplomat LSP');
 	//outputchan = window.createOutputChannel("[diplomat] Client");
 	diplomat.activateLspClient(context)
 		.then(() => {
-			setTimeout(() => {
-				diplomat.pushParameters(context).then(() => designHierarchyDataProvider.refresh())
-				// Elements may use this variable to toggle visibility on extension availability.
-				void commands.executeCommand('setContext', 'diplomat-host:enabled', true);
-				console.log('Diplomat activation completed');
-			},500)
+
+			return diplomat.pushParameters(context).then(() => designHierarchyDataProvider.refresh())
+			// setTimeout(() => {
+			//diplomat.pushParameters(context).then(() => designHierarchyDataProvider.refresh())
+			// 	// Elements may use this variable to toggle visibility on extension availability.
+			// 	void commands.executeCommand('setContext', 'diplomat-host:enabled', true);
+			// 	console.log('Diplomat activation completed');
+			// },500)
+			})
+		.then(() => {
+			void commands.executeCommand('setContext', 'diplomat-host:enabled', true);
+			console.log('Diplomat activation completed');
 			});
 	
 }

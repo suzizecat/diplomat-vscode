@@ -48,6 +48,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view" : "diplomat-prj",
+        "contents": "No project seems to be setup in the current workspace.\n[Create Project](command:diplomat-host.prj.create-project)"
+      }
+    ],
     "menus": {
       "view/title": [
         {
@@ -64,6 +70,33 @@
           "command": "diplomat-host.waves.disable-follow",
           "when": "view == design-hierarchy && diplomat-host:viewerCanFollowSignal && diplomat-host:followWaveSelection",
           "group": "navigation@1"
+        },
+        {
+          "command": "diplomat-host.prj.create-project",
+          "when": "view == diplomat-prj",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "diplomat-host.prj.remove-file",
+          "when": "view == diplomat-prj",
+          "group": "inline"
+        },
+        {
+          "command": "diplomat-host.prj.remove-file",
+          "when": "view == diplomat-prj",
+          "group" : "1_diplomat@2"
+        },
+        {
+          "command" : "diplomat-host.prj.set-project",
+          "when" : "view == diplomat-prj && viewItem == project",
+          "group" : "1_diplomat@1"
+        },
+         {
+          "command": "diplomat-host.set-top",
+          "group": "1_diplomat",
+          "when": "view == diplomat-prj && viewItem == file"
         }
       ],
       "explorer/context": [
@@ -72,7 +105,7 @@
           "group": "2_workspace"
         },
         {
-          "command": "diplomat-server.set-top",
+          "command": "diplomat-host.set-top",
           "group": "2_workspace",
           "when": "resourceExtname in diplomat-host:supportedDesignFiles"
         },
@@ -95,7 +128,7 @@
           "when": "never"
         },
         {
-          "command": "diplomat-server.set-top",
+          "command": "diplomat-host.set-top",
           "when": "never"
         },
         {
@@ -135,7 +168,7 @@
         "title": "Ignore path for Diplomat LSP"
       },
       {
-        "command": "diplomat-server.set-top",
+        "command": "diplomat-host.set-top",
         "title": "Set workspace top level"
       },
       {
@@ -211,6 +244,22 @@
         "command": "diplomat-host.waves.enable-follow",
         "title": "Diplomat: Follow waveform selection",
         "icon":"$(unlock)"
+      },
+      {
+        "command" : "diplomat-host.prj.create-project",
+        "title": "Diplomat: Create new project",
+        "shortTitle": "Create new project",
+        "icon" : "$(add)"
+      },
+      {
+        "command" : "diplomat-host.prj.remove-file",
+        "title" : "Diplomat: Remove element from project",
+        "shortTitle": "Remove element from project",
+        "icon": "$(trash)"
+      },
+      {
+        "command" : "diplomat-host.prj.set-project",
+        "title": "Diplomat: Set project as active"
       }
 
     ],
@@ -380,7 +429,7 @@
     "ts-semaphore": "1.0.0",
     "typia": "~6.5.4",
     "fast-xml-parser": "~4.4.1",
-    "vscode-languageclient": "8.2.0-next.0",
+    "vscode-languageclient": "9.0.1",
     "vscode-uri": "^3.1.0"
   }
 }

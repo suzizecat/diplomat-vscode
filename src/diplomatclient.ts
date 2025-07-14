@@ -82,9 +82,6 @@ export function activateLspClient(context: ExtensionContext) {
 
 	context.subscriptions.push(client);
 	return client.start();
-	
-	//client.start();
-	//pushParameters(context);
 }
 
 

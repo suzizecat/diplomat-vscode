@@ -80,8 +80,9 @@ export function activateLspClient(context: ExtensionContext) {
 		client = startLangServer(serverExecutable, serverArgs, ".");
 	}
 
+	
 	context.subscriptions.push(client);
-	return client.start();
+	return client;
 }
 
 

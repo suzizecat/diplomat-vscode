@@ -61,7 +61,7 @@ export type DiplomatConfigNew = {
   
 export type HDLModule = {
   file : string | lsp.URI,
-  module ?: string
+  moduleName ?: string
 }
 
 export type DiplomatProject = {

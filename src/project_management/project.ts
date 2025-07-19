@@ -56,7 +56,7 @@ export class HDLProject {
 
     // !Getters and Setters
     
-    public get sourceFiles() : ArrayIterator<string> {
+    public get sourceFiles() {
         return this._sourceList.values();
     }
     

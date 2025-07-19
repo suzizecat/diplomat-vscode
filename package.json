@@ -41,7 +41,7 @@
       "explorer": [
         {
           "id": "diplomat-prj",
-          "name" : "Projects",
+          "name": "Projects",
           "when": "diplomat-host:enabled",
           "contextualTitle": "Diplomat project viewer",
           "icon": "$(symbol-class)"
@@ -50,7 +50,7 @@
     },
     "viewsWelcome": [
       {
-        "view" : "diplomat-prj",
+        "view": "diplomat-prj",
         "contents": "No project seems to be setup in the current workspace.\n[Create Project](command:diplomat-host.prj.create-project)"
       }
     ],
@@ -86,14 +86,14 @@
         {
           "command": "diplomat-host.prj.remove-file",
           "when": "view == diplomat-prj",
-          "group" : "1_diplomat@2"
+          "group": "1_diplomat@2"
         },
         {
-          "command" : "diplomat-host.prj.set-project",
-          "when" : "view == diplomat-prj && viewItem == project",
-          "group" : "1_diplomat@1"
+          "command": "diplomat-host.prj.set-project",
+          "when": "view == diplomat-prj && viewItem == project",
+          "group": "1_diplomat@1"
         },
-         {
+        {
           "command": "diplomat-host.set-top",
           "group": "1_diplomat",
           "when": "view == diplomat-prj && viewItem == file"
@@ -118,7 +118,7 @@
       "editor/context": [
         {
           "command": "diplomat-host.waves.add-signal",
-          "group" : "1_run",
+          "group": "1_run",
           "when": "diplomat-host:viewerEnabled"
         }
       ],
@@ -238,30 +238,29 @@
       {
         "command": "diplomat-host.waves.disable-follow",
         "title": "Diplomat: Stop following the waveform selection",
-        "icon":"$(lock)"
+        "icon": "$(lock)"
       },
       {
         "command": "diplomat-host.waves.enable-follow",
         "title": "Diplomat: Follow waveform selection",
-        "icon":"$(unlock)"
+        "icon": "$(unlock)"
       },
       {
-        "command" : "diplomat-host.prj.create-project",
+        "command": "diplomat-host.prj.create-project",
         "title": "Diplomat: Create new project",
         "shortTitle": "Create new project",
-        "icon" : "$(add)"
+        "icon": "$(add)"
       },
       {
-        "command" : "diplomat-host.prj.remove-file",
-        "title" : "Diplomat: Remove element from project",
+        "command": "diplomat-host.prj.remove-file",
+        "title": "Diplomat: Remove element from project",
         "shortTitle": "Remove element from project",
         "icon": "$(trash)"
       },
       {
-        "command" : "diplomat-host.prj.set-project",
+        "command": "diplomat-host.prj.set-project",
         "title": "Diplomat: Set project as active"
       }
-
     ],
     "languages": [
       {
@@ -373,13 +372,19 @@
         "diplomatServer.waveformViewer.reloadOnTestEnd": {
           "description": "Automatically reload the waveform viewer at the end of a test if the waveform viewer is opened.",
           "type": "string",
-          "enum" : ["always","never","onSingle"],
+          "enum": [
+            "always",
+            "never",
+            "onSingle"
+          ],
           "enumItemLabels": [
             "Always reload",
             "Never reload",
             "Reload only if a single testcase has been ran"
           ],
-          "default": ["onSingle"]
+          "default": [
+            "onSingle"
+          ]
         }
       }
     },
@@ -426,9 +431,10 @@
     "typescript": "^5.5.2"
   },
   "dependencies": {
+    "fast-xml-parser": "~4.4.1",
+    "semver": "~7.7",
     "ts-semaphore": "1.0.0",
     "typia": "~6.5.4",
-    "fast-xml-parser": "~4.4.1",
     "vscode-languageclient": "9.0.1",
     "vscode-uri": "^3.1.0"
   }

@@ -7,6 +7,9 @@
 ## Added 
 
  - Add verilog as supported languages (with SV syntax highlight)
+ - Add server name and version informations
+ - Add project tree-view
+ - Add overall project management
 
 # 0.3.0 - 2025-05-31
 

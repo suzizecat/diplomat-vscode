@@ -5,6 +5,8 @@ import { showQuickPick, showInputBox } from './basicInput';
 import { multiStepInput } from './multiStepInput';
 import { quickOpen } from './quickOpen';
 
+const semver = require('semver')
+
 import * as diplomat from './diplomatclient';
 import {showInstanciate} from './diplomatclient';
 
@@ -23,6 +25,7 @@ import { DiplomatWorkspace } from './workspace_management/diplomat_workspace';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 
+const RequiredLSVersion = "~0.3.0-dev"
 
 var waveViewer: GTKWaveViewer;
 var currHierLocation: DesignElement | null = null;
@@ -318,9 +321,32 @@ export function activate(context: ExtensionContext) {
 
 	console.log('Starting Diplomat LSP');
 	//outputchan = window.createOutputChannel("[diplomat] Client");
-	diplomat.activateLspClient(context)
-		.then(() => {
+	let LSPClient = diplomat.activateLspClient(context)
+	LSPClient.start().then(() => {
 
+			let serverInfo = LSPClient.initializeResult;
+			if(serverInfo) {
+					if(serverInfo.serverInfo?.name === "Diplomat-LSP")
+					{
+						const vinfo = serverInfo.serverInfo?.version
+						if(! vinfo)
+							window.showErrorMessage("Diplomat LSP has not returned any version number");
+						else
+						{
+							if(vinfo === "custom-build" || semver.satisfies(vinfo,RequiredLSVersion))
+							{
+								logger.info( `Got server version info ${vinfo}`);
+							}
+							else
+							{
+								logger.warn( `Got mismatching server version info ${vinfo} (requires ${RequiredLSVersion})`);
+								window.showWarningMessage(`The Lanquage server returned a mismatching version number ${vinfo} (requires ${RequiredLSVersion})`);
+							}
+
+						}
+					}
+				}
+			
 			return diplomat.pushParameters(context).then(() => designHierarchyDataProvider.refresh())
 			// setTimeout(() => {
 			//diplomat.pushParameters(context).then(() => designHierarchyDataProvider.refresh())

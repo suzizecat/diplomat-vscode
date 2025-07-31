@@ -5,6 +5,7 @@ import { DiplomatConfigNew, DiplomatProject } from "../exchange_types";
 import { ProjectElement, ProjectFileTreeProvider } from "../gui/project_files_view";
 import { HDLProject } from "../project_management/project";
 import { send } from "node:process";
+import path = require("node:path");
 
 
 
@@ -121,6 +122,16 @@ export class DiplomatWorkspace
     }
     
     public get configFilePath() : Uri | null {
+        let manual_location = workspace.getConfiguration("diplomatServer.projects")?.get<string>("projectFilePath");
+        
+        if(manual_location && manual_location.trim().length > 0)
+        {
+            if(path.isAbsolute(manual_location))
+                return Uri.file(path.normalize(manual_location));
+            else
+                return Uri.file(path.join(this._config.workspaceDirs[0],manual_location));
+
+        }
         if( this._context.storageUri !== undefined)
         {
             return Uri.joinPath(this._context.storageUri,"diplomat-settings-alpha.json");

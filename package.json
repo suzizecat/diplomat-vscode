@@ -316,11 +316,11 @@
     "configuration": {
       "title": "Diplomat Server",
       "properties": {
-        "diplomatServer.server.configurationPath": {
+        "diplomatServer.projects.projectFilePath": {
           "scope": "resource",
-          "description": "Path to the server configuration file",
+          "description": "Path for the diplomat projects configuration file. If empty (default) the storage will be located in the VSCode Extension storage space.",
           "type": "string",
-          "default": "./.diplomat.json"
+          "default": ""
         },
         "diplomatServer.serverArgs": {
           "description": "Server arguments",

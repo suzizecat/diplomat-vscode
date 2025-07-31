@@ -10,6 +10,13 @@
  - Add server name and version informations
  - Add project tree-view
  - Add overall project management
+ - Add `diplomatServer.projects.projectFilePath` to store the project configuration path ([reference in #9](https://github.com/suzizecat/diplomat-vscode/issues/9#issuecomment-2962364667))
+
+## Removed
+
+ - Removed configuration `diplomatServer.server.configurationPath` (unused)
+
+
 
 # 0.3.0 - 2025-05-31
 

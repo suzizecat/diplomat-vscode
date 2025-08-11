@@ -11,7 +11,7 @@ import * as diplomat from './diplomatclient';
 import {showInstanciate} from './diplomatclient';
 
 import {GTKWaveViewer} from "./support_waveform_viewers/gtkwave";
-import { DiplomatProject, FileSymbolsLookupResult, SignalData, WaveformViewerCbArgs, ModuleBlackBox } from './exchange_types';
+import { DiplomatProject, FileSymbolsLookupResult, SignalData, WaveformViewerCbArgs, ModuleBlackBox, HDLModule } from './exchange_types';
 import { Location } from 'vscode-languageclient';
 
 import { DesignElement, DesignHierarchyTreeProvider } from "./gui/designExplorerPanel";
@@ -41,7 +41,7 @@ export function activate(context: ExtensionContext) {
 	// Logger setup
 	// ########################################################################
 	logger = window.createOutputChannel("[diplomat] Host", { log: true });
-	context.subscriptions.push(commands.registerCommand('diplomat-host.private.get-logger',() => {return logger;}));
+	context.subscriptions.push(commands.registerCommand('diplomat-host.private.get-logger', () => { return logger; }));
 
 	// ########################################################################
 	// Context setup
@@ -60,7 +60,7 @@ export function activate(context: ExtensionContext) {
 	const annotationDecorationType = window.createTextEditorDecorationType({})
 
 	if (!gtkwaveExecutable) {
-		throw new Error("`DiplomatServer.tools.GTKWave.path` is not set"); 
+		throw new Error("`DiplomatServer.tools.GTKWave.path` is not set");
 	}
 	if (gtkwaveOptions === undefined) {
 		throw new Error("`DiplomatServer.tools.GTKWave.options` is not set");
@@ -69,45 +69,44 @@ export function activate(context: ExtensionContext) {
 	
 
 	const forwardViewerCommands = async (args: WaveformViewerCbArgs) => {
-		let fcts : {
-			[key:string] : ( args : Array<any>) => Promise<void>;
+		let fcts: {
+			[key: string]: (args: Array<any>) => Promise<void>;
 		} = {
-			"select" : async (args : Array<string>) => {
+			"select": async (args: Array<string>) => {
 				// If the feature is disabled, just return without running anything.
 				logger.debug("Viewer requested selection bind");
-				if(! editorFollowsWaveform)
+				if (!editorFollowsWaveform)
 					return;
-				const result = await commands.executeCommand<{[key : string] : Location | null}>("diplomat-server.resolve-paths",...args);
-				for (let key in result)
-				{
+				const result = await commands.executeCommand<{ [key: string]: Location | null }>("diplomat-server.resolve-paths", ...args);
+				for (let key in result) {
 					const value = result[key];
-					if(value !== null)
-					{
+					if (value !== null) {
 						logger.trace(`Open file ${value.uri}`);
 						workspace.openTextDocument(Uri.parse(value.uri))
-						.then(doc =>  {window.showTextDocument(doc)
-							.then(editor => {
+							.then(doc => {
+								window.showTextDocument(doc)
+								.then(editor => {
 							
-							let position : Range = new Range(
-								value.range.start.line,
-								value.range.start.character,
-								value.range.end.line,
-								value.range.end.character);
-							editor.revealRange(position);
-							editor.selection = new Selection(value.range.start.line,
-								value.range.start.character,
-								value.range.end.line,
-								value.range.end.character);
-						})})
-						;
+									let position: Range = new Range(
+										value.range.start.line,
+										value.range.start.character,
+										value.range.end.line,
+										value.range.end.character);
+									editor.revealRange(position);
+									editor.selection = new Selection(value.range.start.line,
+										value.range.start.character,
+										value.range.end.line,
+										value.range.end.character);
+								})
+							})
+							;
 					}
 				}
 			}
 		}
 		console.log(`Request ${args.name} command with args ${args.args}`);
 
-		if(fcts.hasOwnProperty(args.name))
-		{
+		if (fcts.hasOwnProperty(args.name)) {
 			await fcts[args.name](args.args);
 		}
 		//await commands.executeCommand(`diplomat-server.${args.name}`, args.args);
@@ -116,8 +115,7 @@ export function activate(context: ExtensionContext) {
 	const updateAnnotation = async () => {
 		if (currHierLocation) {
 			await commands.executeCommand("vscode.open", currHierLocation.fileUri)
-			if(waveViewer.running)
-			{
+			if (waveViewer.running) {
 				let designPath = currHierLocation.hierPath;
 				var fileLookup: FileSymbolsLookupResult;
 				commands.executeCommand<FileSymbolsLookupResult>("diplomat-server.list-symbols", designPath)
@@ -137,8 +135,7 @@ export function activate(context: ExtensionContext) {
 									let elt_name = elt.sig.split(".").slice(-1)[0];
 									
 									console.log(`Pushing annotations for ${elt_name}`)
-									for (let range  of fileLookup[elt_name])
-									{
+									for (let range of fileLookup[elt_name]) {
 										annotations.push(TextAnnotator.inTextAnnotationAfter(
 											`${elt.val}`,
 											range as Range
@@ -151,36 +148,59 @@ export function activate(context: ExtensionContext) {
 						}
 					});
 			}
-			else
-			{
+			else {
 				await commands.executeCommand("diplomat-host.waves.clear-annotations");
 			}
 		}
-		else
-		{
+		else {
 			await commands.executeCommand("diplomat-host.waves.clear-annotations");
 		}
 	}
 
-	waveViewer = new GTKWaveViewer(context,gtkwaveExecutable, gtkwaveOptions, forwardViewerCommands, [".vcd",".fst",".gtkw",".ghw"]);
-	waveViewer.verboseLog = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<boolean>("verbose",true);
+	waveViewer = new GTKWaveViewer(context, gtkwaveExecutable, gtkwaveOptions, forwardViewerCommands, [".vcd", ".fst", ".gtkw", ".ghw"]);
+	waveViewer.verboseLog = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<boolean>("verbose", true);
 	context.subscriptions.push(waveViewer);
 	
 	commands.executeCommand('setContext', 'diplomat-host:supportedWavesFiles', waveViewer.supportedExtensions);
 	
-	const testController = new DiplomatTestController(context,waveViewer.refreshWaves);
+	const testController = new DiplomatTestController(context, waveViewer.refreshWaves);
 	context.subscriptions.push(testController);
 
 	
 	let designHierarchyDataProvider = new DesignHierarchyTreeProvider();
-	window.createTreeView("design-hierarchy",{treeDataProvider: designHierarchyDataProvider});
+	window.createTreeView("design-hierarchy", { treeDataProvider: designHierarchyDataProvider });
 
 	let diplomatWorkspace = new DiplomatWorkspace(context);
 	window.createTreeView("diplomat-prj", diplomatWorkspace.treeViewProvider);
 	diplomatWorkspace.openProjectFromConfig();
 	
 	console.log('Adding some commands...');
-	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.create-project", async (name ?:string ) => diplomatWorkspace.addProject(name))); 
+	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.create-project", async (name?: string) => diplomatWorkspace.addProject(name)));
+	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.create-project-from-top", async (target: Uri) => {
+		let bblist = await commands.executeCommand<ModuleBlackBox[]>("diplomat-server.get-file-bbox", target.toString());
+		
+		if (bblist.length == 0)
+			return Promise.reject();
+
+		let bb = bblist[0];
+
+		logger.info(`Building project from file ${bb.module}`);
+
+		let prj = await diplomatWorkspace.addProject(bb.module);
+		let hdl_module: HDLModule = { file: target.toString(), moduleName: bb.module }
+		let uri_list_raw = await commands.executeCommand<string[]>("diplomat-server.prj.tree-from-module",hdl_module);
+		let uri_list = uri_list_raw.map((elt) => Uri.parse(elt));
+		
+		
+		for (let elt of uri_list) {
+			console.log(`    Adds file ${elt} to the project`);
+			logger.info(`    Adds file ${elt} to the project`);
+			await diplomatWorkspace.addFileToProject(elt, prj.name);
+		}
+	
+		logger.info(`Project ${bb.module} successfuly built.`);
+		
+	})); 
 	context.subscriptions.push(commands.registerCommand("diplomat-host.open-waves", async (args : Uri) => {
 		console.log("Opening waveform...");
 		waveViewer.openWave(args.fsPath);

@@ -105,6 +105,11 @@
           "group": "2_workspace"
         },
         {
+          "command": "diplomat-host.prj.create-project-from-top",
+          "group": "2_workspace",
+          "when": "resourceExtname in diplomat-host:supportedDesignFiles"
+        },
+        {
           "command": "diplomat-host.set-top",
           "group": "2_workspace",
           "when": "resourceExtname in diplomat-host:supportedDesignFiles"
@@ -123,6 +128,9 @@
         }
       ],
       "commandPalette": [
+        {"command": "diplomat-host.prj.create-project-from-top",
+          "when" : "never"
+        },
         {
           "command": "diplomat-server.ignore",
           "when": "never"
@@ -249,6 +257,12 @@
         "command": "diplomat-host.prj.create-project",
         "title": "Diplomat: Create new project",
         "shortTitle": "Create new project",
+        "icon": "$(add)"
+      },
+      {
+        "command": "diplomat-host.prj.create-project-from-top",
+        "title": "Diplomat: Create new project from file",
+        "shortTitle": "Create new project from file",
         "icon": "$(add)"
       },
       {

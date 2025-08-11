@@ -93,23 +93,23 @@ export class DiplomatWorkspace
     }
 
 
-    public async addProject(name ?: string)
+    public async addProject(name ?: string) : Promise<HDLProject>
     {
         if(typeof name != "string")
                     name = await window.showInputBox({prompt : "Enter the new project name"});
         
         if(! name)
-            return;
+            return Promise.reject("No name provided");
 
         if(name.trim().length == 0)
         {
             await window.showErrorMessage("Can not create project with an empty name.");
-            return;
+            return Promise.reject("Empty name");
         }
         else if(this._projectFilesManager.registeredProjects.has(name))
         {
             await window.showErrorMessage(`A project with name ${name} seems to be already existing.`);
-            return;
+            return Promise.reject("Already exists");
         }
         else
         {
@@ -117,7 +117,8 @@ export class DiplomatWorkspace
 
             await this._projectFilesManager.processProject(newPrj);
             this._projectFilesManager.refresh();
-            await window.showInformationMessage (`Project ${name} has been created.`);
+            return Promise.resolve(newPrj);
+            await window.showInformationMessage(`Project ${name} has been created.`);
         }
     }
     
@@ -231,4 +232,10 @@ export class DiplomatWorkspace
     {
        this._projectFilesManager.removePrjElement(elt);        
     }
+
+    public async addFileToProject(file: Uri, prjName: string)
+    {
+        await this._projectFilesManager.addFileToProject(prjName, file);
+    }
+
 }

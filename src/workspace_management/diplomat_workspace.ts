@@ -93,15 +93,20 @@ export class DiplomatWorkspace
     }
 
 
-    public async addProject(name ?: string) : Promise<HDLProject>
+    public async addProject(name ?: string, suggestName : boolean = false) : Promise<HDLProject>
     {
-        if(typeof name != "string")
-                    name = await window.showInputBox({prompt : "Enter the new project name"});
+        if(suggestName || typeof name != "string")
+                    name = await window.showInputBox({
+                prompt : "Enter the new project name",
+                title : "Project name",
+                value : typeof name == "string" ? name.trim() : undefined
+            });
         
         if(! name)
             return Promise.reject("No name provided");
 
-        if(name.trim().length == 0)
+        name = name.trim();
+        if(name.length == 0)
         {
             await window.showErrorMessage("Can not create project with an empty name.");
             return Promise.reject("Empty name");
@@ -167,13 +172,16 @@ export class DiplomatWorkspace
         }
     }
 
-    protected async _readConfigFile() : Promise<void>
+    public async readConfigFile(savePath ?: Uri | null) : Promise<void>
     {
-        if(this.configFilePath === null)
-            return;
+        if(! savePath)
+            savePath = this.configFilePath;
 
+        if(! savePath)
+            return;
+        
         try {
-            await workspace.fs.readFile(this.configFilePath).then(
+            await workspace.fs.readFile(savePath).then(
                 (data) => {
                     this._config = JSON.parse(new TextDecoder().decode(data));
                 }
@@ -186,9 +194,12 @@ export class DiplomatWorkspace
     }
 
 
-    public async saveConfig() : Promise<void>
+    public async saveConfig(savePath ?: Uri | null) : Promise<void>
     {
-        if(this.configFilePath === null)
+        if(! savePath)
+            savePath = this.configFilePath;
+
+        if(! savePath)
             return;
 
         this.config.projects = [];
@@ -197,16 +208,16 @@ export class DiplomatWorkspace
 
         try 
         {
-            await workspace.fs.writeFile(this.configFilePath,new TextEncoder().encode(JSON.stringify(this._config,undefined,4)));
+            await workspace.fs.writeFile(savePath,new TextEncoder().encode(JSON.stringify(this._config,undefined,4)));
         } catch (error) {
-            window.showErrorMessage(`Unable to write the configuration file ${this.configFilePath}`);
+            window.showErrorMessage(`Unable to write the configuration file ${savePath}`);
         }
     }
 
     public openProjectFromConfig()
     {
         console.log(`Restoring workspace from config file`)
-        this._readConfigFile()
+        this.readConfigFile()
         .then(async () => {
             for(let prj of this.config.projects)
             {
@@ -230,12 +241,16 @@ export class DiplomatWorkspace
 
     public removeProjectElement(elt : ProjectElement)
     {
-       this._projectFilesManager.removePrjElement(elt);        
+       this._projectFilesManager.removePrjElement(elt);
+       this.saveConfig();
+
     }
 
-    public async addFileToProject(file: Uri, prjName: string)
+    public async addFileToProject(file: Uri, prjName: string, skipSave : boolean = false)
     {
         await this._projectFilesManager.addFileToProject(prjName, file);
+        if(! skipSave)
+            await this.saveConfig();
     }
 
 }

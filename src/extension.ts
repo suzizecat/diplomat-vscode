@@ -186,7 +186,7 @@ export function activate(context: ExtensionContext) {
 
 		logger.info(`Building project from file ${bb.module}`);
 
-		let prj = await diplomatWorkspace.addProject(bb.module);
+		let prj = await diplomatWorkspace.addProject(bb.module,true);
 		let hdl_module: HDLModule = { file: target.toString(), moduleName: bb.module }
 		let uri_list_raw = await commands.executeCommand<string[]>("diplomat-server.prj.tree-from-module",hdl_module);
 		let uri_list = uri_list_raw.map((elt) => Uri.parse(elt));
@@ -195,10 +195,11 @@ export function activate(context: ExtensionContext) {
 		for (let elt of uri_list) {
 			console.log(`    Adds file ${elt} to the project`);
 			logger.info(`    Adds file ${elt} to the project`);
-			await diplomatWorkspace.addFileToProject(elt, prj.name);
+			await diplomatWorkspace.addFileToProject(elt, prj.name, true);
 		}
+		diplomatWorkspace.saveConfig();
 	
-		logger.info(`Project ${bb.module} successfuly built.`);
+		logger.info(`Project '${prj.name}' successfuly built.`);
 		
 	})); 
 	context.subscriptions.push(commands.registerCommand("diplomat-host.open-waves", async (args : Uri) => {

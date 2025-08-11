@@ -632,10 +632,27 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 		this.registeredProjects.delete(prjName);
 	}
 
+	public renameProject(oldName : string, newName : string) {
+		if(this.getProjectFromName(newName))
+			return;
+
+		let prj = this.getProjectFromName(oldName);
+
+		if(! prj)
+			return;
+
+		this.removeProject(oldName);
+
+		prj.name = newName;
+		this.processProject(prj);
+
+	}
+
+
 	public removePrjElement(elt : ProjectElement)
 	{
 		if(elt.parent)
-			{
+		{
 			let tgtPrjName = elt.root.logicalName;
 			
 			let tgtPrj : HDLProject | undefined = this.registeredProjects.get(tgtPrjName);
@@ -649,7 +666,11 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 			tgtPrj.removeFileFromProject(rel);
             elt.parent.removeChild(elt);
 		}
-
+		else
+		{
+			// We want to remove a Project
+			this.removeProject(elt.logicalName);
+		}
 		this.refresh();
 
 

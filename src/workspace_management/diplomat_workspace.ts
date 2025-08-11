@@ -135,7 +135,12 @@ export class DiplomatWorkspace
             if(path.isAbsolute(manual_location))
                 return Uri.file(path.normalize(manual_location));
             else
-                return Uri.file(path.join(this._config.workspaceDirs[0],manual_location));
+                {
+                    let wspath = workspace?.workspaceFolders?.at(0)?.uri?.fsPath;
+                    if(! wspath)
+                        return null;
+                    return Uri.file(path.join(wspath,manual_location));
+                }
 
         }
         if( this._context.storageUri !== undefined)

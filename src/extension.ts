@@ -298,6 +298,11 @@ export function activate(context: ExtensionContext) {
 		diplomatWorkspace.setActiveProject(target);
 		diplomatWorkspace.sendProjectToLSP(target);
 	}));
+	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.rename", async (target ?: ProjectElement) => {
+		await diplomatWorkspace.renameProject(target);
+	}));
+
+
 
 	context.subscriptions.push(commands.registerCommand("diplomat-host.set-top", async(file : Uri | ProjectFile) => {
 

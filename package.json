@@ -88,6 +88,11 @@
           "when": "view == diplomat-prj",
           "group": "1_diplomat@2"
         },
+		{
+			"command" : "diplomat-host.prj.rename",
+			"when": "view == diplomat-prj && viewItem == project",
+            "group": "1_diplomat@2"
+		},
         {
           "command": "diplomat-host.prj.set-project",
           "when": "view == diplomat-prj && viewItem == project",
@@ -158,7 +163,11 @@
         {
           "command": "diplomat-host.waves.reload",
           "when": "diplomat-host:viewerEnabled"
-        }
+        },
+		{
+			"command" : "diplomat-host.prj.rename",
+			"when": "never"
+		}
       ]
     },
     "commands": [
@@ -271,6 +280,11 @@
         "shortTitle": "Remove element from project",
         "icon": "$(trash)"
       },
+	  {
+		"command": "diplomat-host.prj.rename",
+		"title": "Diplomat: Rename project",
+		"shortTitle": "Rename project"
+	  },
       {
         "command": "diplomat-host.prj.set-project",
         "title": "Diplomat: Set project as active"

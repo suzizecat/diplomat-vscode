@@ -80,6 +80,32 @@ export class DiplomatWorkspace
         }
     }
 
+    public async renameProject(prj?: HDLProject | string | ProjectElement | null, new_name?: string)
+    {
+        let resolvedPrj: HDLProject | null;
+        
+        if (prj instanceof ProjectElement)
+            resolvedPrj = this._projectFilesManager.getProjectFromElement(prj);
+        else if (prj instanceof HDLProject)
+            resolvedPrj = prj;
+        else if (prj)
+            resolvedPrj = this._projectFilesManager.getProjectFromName(prj);
+        else
+            return;
+
+        if (!resolvedPrj)
+            return;
+
+        if (! new_name)
+            new_name = await window.showInputBox({ placeHolder: "Enter the new project name", title: "Project name" });
+        
+        if (!new_name)
+            return;
+        
+        this._projectFilesManager.renameProject(resolvedPrj.name, new_name);            
+
+    }
+
     public get treeViewProvider() : TreeViewOptions<TreeItem> {
         return {
             treeDataProvider: this._projectFilesManager,

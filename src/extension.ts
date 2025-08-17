@@ -176,7 +176,30 @@ export function activate(context: ExtensionContext) {
 	
 	console.log('Adding some commands...');
 	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.create-project", async (name?: string) => diplomatWorkspace.addProject(name)));
-	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.create-project-from-top", async (target: Uri) => {
+	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.create-project-from-top", async (target ?: Uri) => {
+		if(! target)
+		{
+			let valid_extensions = workspace.getConfiguration("diplomatServer.index").get<string[]>("validExtensions");
+			if(! valid_extensions)
+				valid_extensions = [".sv", ".v"]
+			let selection = await window.showOpenDialog({
+				canSelectFiles : true, 
+				canSelectFolders : false, 
+				canSelectMany : false,
+				filters: {
+					"Supported extensions" :  valid_extensions,
+					"SystemVerilog" : ["sv","svi","v"],
+					"Verilog" : ["v"]
+				},
+				title : "Select the root file of your project",
+				openLabel :"Select as top"
+			})
+
+			if(! selection)
+				return;
+			else
+				target = selection[0];
+		}
 		let bblist = await commands.executeCommand<ModuleBlackBox[]>("diplomat-server.get-file-bbox", target.toString());
 		
 		if (bblist.length == 0)
@@ -247,6 +270,7 @@ export function activate(context: ExtensionContext) {
 	}));
 
 	context.subscriptions.push(commands.registerCommand("diplomat-host.force-push-config", async () => {
+		console.log("Called force push config")
 		diplomat.pushParameters(context);
 	}));
 

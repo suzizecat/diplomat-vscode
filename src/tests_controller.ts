@@ -9,7 +9,6 @@ import { CancellationToken } from "vscode-languageclient";
 import { XMLParser } from "fast-xml-parser";
 
 import * as nodefs from  "node:fs/promises" ;
-import test from "node:test";
 export class DiplomatTestController {
 	public controller: TestController
 	protected context: ExtensionContext

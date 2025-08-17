@@ -177,6 +177,7 @@ export async function pushParameters(context : ExtensionContext) : Promise<void>
 		const config_path : Uri = Uri.joinPath(context.storageUri,"diplomat-settings.json");
 		console.log(`Pushing parameters from ${config_path}`);
 		try {
+			let exist = await workspace.fs.stat(config_path); // Check if file exists, throw otherwise.
 			let content = await workspace.fs.readFile(config_path);
 			let params : extypes.DiplomatConfig = JSON.parse(new TextDecoder().decode(content));
 			await commands.executeCommand("diplomat-server.push-config",params);

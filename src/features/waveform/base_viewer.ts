@@ -1,5 +1,25 @@
+ /*
+ * Diplomat for Visual Studio Code is a language server protocol client for Diplomat language server.
+ * Copyright (C) 2025  Julien FAUCHER
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
 import { spawn, ChildProcess } from 'node:child_process';
-import { EventEmitter } from 'node:stream';
+// import { EventEmitter } from 'node:stream';
+import {EventEmitter} from "node:events";
 import { once } from 'node:events';
 
 import { commands, ExtensionContext, workspace } from 'vscode';
@@ -7,7 +27,7 @@ import { commands, ExtensionContext, workspace } from 'vscode';
 import { assertEquals } from "typia"
 import Semaphore = require('ts-semaphore');
 
-import { SignalData, WaveformViewerCbArgs } from '../exchange_types';
+import { SignalData, WaveformViewerCbArgs } from '../../exchange_types';
 
 // const  cmdAccess = new Semaphore(1);
 
@@ -82,9 +102,11 @@ export abstract class BaseViewer {
      * @param stdoutCallBack Callback to use when the viewer provides commands
      * @param validWavesFiles List of valid waveform files extensions.
      */
-    constructor(context: ExtensionContext, execPath: string, execArgs: Array<string>, stdoutCallBack: (args: WaveformViewerCbArgs) => Promise<void>, validWavesFiles: string[] = []) {
+    constructor(context: ExtensionContext, execPath : string | undefined, execArgs : Array<string> | undefined, stdoutCallBack: (args: WaveformViewerCbArgs) => Promise<void>, validWavesFiles: string[] = []) {
+        if(! execPath)
+            throw new Error("Waveform viewer command cannot be unset.")
         this.executable = execPath;
-        this.spawnArgs = execArgs;
+        this.spawnArgs = execArgs ? execArgs : [];
         this.validWavesExtension = validWavesFiles;
         this.context = context;
         

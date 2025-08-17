@@ -5,12 +5,12 @@ import { showQuickPick, showInputBox } from './basicInput';
 import { multiStepInput } from './multiStepInput';
 import { quickOpen } from './quickOpen';
 
-const semver = require('semver')
+const semver = require('semver');
 
 import * as diplomat from './diplomatclient';
 import {showInstanciate} from './diplomatclient';
 
-import {GTKWaveViewer} from "./support_waveform_viewers/gtkwave";
+import {GTKWaveViewer} from "./features/waveform/gtkwave";
 import { DiplomatProject, FileSymbolsLookupResult, SignalData, WaveformViewerCbArgs, ModuleBlackBox, HDLModule } from './exchange_types';
 import { Location } from 'vscode-languageclient';
 
@@ -25,7 +25,7 @@ import { DiplomatWorkspace } from './workspace_management/diplomat_workspace';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 
-const RequiredLSVersion = "~0.3.0-dev"
+
 
 var waveViewer: GTKWaveViewer;
 var currHierLocation: DesignElement | null = null;
@@ -46,7 +46,7 @@ export function activate(context: ExtensionContext) {
 	// ########################################################################
 	// Context setup
 	// ########################################################################
-	commands.executeCommand('setContext', 'diplomat-host:followWaveSelection', true)
+	
 	commands.executeCommand('setContext', 'diplomat-host:supportedDesignFiles', workspace.getConfiguration("diplomatServer.index").get<string[]>("validExtensions"));
 	commands.executeCommand("setContext", "diplomat-host:viewerEnabled", false);
 

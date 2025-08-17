@@ -1,4 +1,24 @@
+ /*
+ * Diplomat for Visual Studio Code is a language server protocol client for Diplomat language server.
+ * Copyright (C) 2025  Julien FAUCHER
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import * as vscode from 'vscode';
+import * as lsp from 'vscode-languageclient';
+
 // Example usage:
 // const extensions = getFileExtensionsForLanguageId('typescript');
 // console.log(extensions); // e.g., ['.ts', '.tsx']
@@ -24,4 +44,39 @@ export function getFileExtensionsForLanguageId(languageId: string, specificDiplo
 
     // Remove duplicates
     return Array.from(new Set(result));
+}
+
+export function vscode_in_debug_mode() : boolean {
+    return process.env.VSCODE_DEBUG_MODE === "true";
+}
+
+export enum ContextVar {
+    DiplomatEnabled = "diplomat-host:enabled",
+};
+
+
+export async function reveal_file(file : vscode.Uri, pos ?: vscode.Location | lsp.Range | vscode.Range)
+{
+    let document = await vscode.workspace.openTextDocument(file);
+    let editor = await vscode.window.showTextDocument(document);
+
+    if(pos)
+    {
+        if(pos instanceof vscode.Range)
+        {
+            editor.revealRange(pos);
+            editor.selection = new vscode.Selection(pos.start, pos.end);
+        }
+        else if(pos instanceof vscode.Location)
+        {
+            editor.revealRange(pos.range);
+            editor.selection = new vscode.Selection(pos.range.start, pos.range.end);
+        }
+        else
+        {
+            editor.revealRange(new vscode.Range(pos.start.line, pos.start.character, pos.end.line, pos.end.character));
+            editor.selection = new vscode.Selection(pos.start.line,pos.start.character,pos.end.line,pos.end.character);
+        }
+    }
+
 }

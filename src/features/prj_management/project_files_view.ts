@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { Utils } from "vscode-uri"
-import { DiplomatProject } from '../exchange_types';
+import { DiplomatProject } from '../../exchange_types';
 import path = require('path');
 
-import { getFileExtensionsForLanguageId } from '../utils';
-import { HDLProject } from '../project_management/project';
+import { getFileExtensionsForLanguageId } from '../../utils';
+import { HDLProject } from './project';
 
 // type ProjectElement = ProjectFolder | ProjectFile;
 

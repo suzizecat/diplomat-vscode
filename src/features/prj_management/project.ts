@@ -1,4 +1,4 @@
-import { DiplomatProject, HDLModule } from "../exchange_types";
+import { DiplomatProject, HDLModule } from "../../exchange_types";
 import {BaseProjectTests} from "./project_test";
 
 import { commands } from "vscode";

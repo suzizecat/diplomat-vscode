@@ -1,9 +1,9 @@
 import { workspace, ExtensionContext, LogOutputChannel, commands, window, TreeViewOptions, TreeItem } from "vscode";
 import { Uri } from "vscode";
 
-import { DiplomatConfigNew, DiplomatProject } from "../exchange_types";
-import { ProjectElement, ProjectFileTreeProvider } from "../gui/project_files_view";
-import { HDLProject } from "../project_management/project";
+import { DiplomatConfigNew, DiplomatProject } from "../../exchange_types";
+import { ProjectElement, ProjectFileTreeProvider } from "./project_files_view";
+import { HDLProject } from "./project";
 import { send } from "node:process";
 import path = require("node:path");
 

@@ -72,6 +72,10 @@ export class FeatureWaveformViewer extends BaseFeature {
 	 */
 	protected _text_decoration_signal_value = window.createTextEditorDecorationType({});
 
+	// ########################################################################
+	// Constructor
+	// ########################################################################
+
 	public constructor(ext_context : ExtensionEnvironment)
 	{
 		// Base setup of a feature
@@ -91,6 +95,9 @@ export class FeatureWaveformViewer extends BaseFeature {
 	}
 
 	
+	// ########################################################################
+	// Waveform management
+	// ########################################################################
 	/**
 	 * This command will request opening the file through the waveform viewer.
 	 * @param file Waveform file to open
@@ -146,6 +153,10 @@ export class FeatureWaveformViewer extends BaseFeature {
 		}
 	}
 
+	// ########################################################################
+	// Viewer related functions
+	// ########################################################################
+	
 	/**
 	 * This function will switch and select the 'right' viewer for the given
 	 * file.

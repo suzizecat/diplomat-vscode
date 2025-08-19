@@ -40,6 +40,23 @@
 			"${0}"
 		],
 		"description": "Add the GPLv3 header"
+	},
+	"Comment Section Title" : {
+		"prefix": "//s",
+		"body": [
+			"$LINE_COMMENT #############################################################################",
+			"$LINE_COMMENT ${1:Section title}",
+			"$LINE_COMMENT #############################################################################",
+			"$0"
+		]
+	},
+	"Comment Section SubTitle" : {
+		"prefix": "//ss",
+		"body": [
+			"$LINE_COMMENT ${1:Section title}",
+			"$LINE_COMMENT ----------------------------------------------------------------------------",
+			"$0"
+		]
 	}
 
 

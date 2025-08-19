@@ -19,8 +19,8 @@ import { DesignElement, DesignHierarchyTreeProvider } from "./gui/designExplorer
 import { TextAnnotator } from './text_annotator';
 
 import { DiplomatTestController } from './tests_controller';
-import { ProjectElement, ProjectFile, ProjectFileTreeProvider } from './features/prj_management/project_files_view';
-import { DiplomatWorkspace } from './features/prj_management/diplomat_workspace';
+import { ProjectElement, ProjectFile, ProjectFileTreeProvider } from './features/ws_management/project_files_view';
+import { DiplomatWorkspace } from './features/ws_management/diplomat_workspace';
 //import * as globalvar from "./global";
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed

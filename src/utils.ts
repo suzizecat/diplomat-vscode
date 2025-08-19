@@ -78,5 +78,18 @@ export async function reveal_file(file : vscode.Uri, pos ?: vscode.Location | ls
             editor.selection = new vscode.Selection(pos.start.line,pos.start.character,pos.end.line,pos.end.character);
         }
     }
+}
 
+export async function does_path_exist(path : vscode.Uri) : Promise<boolean>
+{
+    try
+    {
+        await vscode.workspace.fs.stat(path); // Check if file exists, throw otherwise.
+        return true;
+    }
+    catch (_)
+    {
+        return false;
+    }
+    
 }

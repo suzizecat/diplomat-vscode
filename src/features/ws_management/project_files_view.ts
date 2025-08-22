@@ -3,8 +3,9 @@ import { Utils } from "vscode-uri"
 import { DiplomatProject } from '../../exchange_types';
 import path = require('path');
 
-import { getFileExtensionsForLanguageId } from '../../utils';
+import { get_workspace_base_uri, getFileExtensionsForLanguageId } from '../../utils';
 import { HDLProject } from './project';
+import { BaseProjectElement, ProjectElementKind_t, ProjectFile, ProjectFolder } from './base_prj_element';
 
 // type ProjectElement = ProjectFolder | ProjectFile;
 
@@ -14,423 +15,43 @@ export enum ProjectFileKind {
 	Other
 }
 
-export abstract class ProjectElement extends vscode.TreeItem
-{
-	public static readonly workspaceBaseUri : vscode.Uri | null = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : null;
-	public id : string = "";
-	/**
-	 * The logical name should be used for local lookup and so on.
-	 */
-	public logicalName : string = "" 
-	protected _parent : ProjectElement | null = null;
-	protected _children : ProjectElement[] = [];
-
-
-	public set parent(nParent : ProjectElement | null | undefined) 
-	{
-		if(this._parent != nParent)
-		{
-			if(this._parent)
-				this._parent.removeChild(this);
-			
-			if (nParent) 
-			{
-				this._parent = nParent.add_child(this);
-				this.regenerateId();
-			}
-		}
-	}
-
-	public get parent() : ProjectElement | null | undefined
-	{
-		return this._parent;
-	}
-
-	public regenerateId()
-	{
-		let idBase = this._parent ? `${this._parent.logicalPath}` : "";
-		this.id = `${idBase}:${this.logicalName}`;
-	}
-
-	public get root() : ProjectElement
-	{
-		let ret : ProjectElement = this;
-
-		while(ret._parent)
-			ret = ret._parent;
-
-		return ret;
-	}
-
-	/**
-	 * This function will return the uri path of the current element relative to
-	 * the workspace.
-	 * 
-	 * @returns the relative path or null if the current element has no URI.
-	 */
-	public get prjRelativePath() : string | null
-	{
-		if(! this.resourceUri)
-			return null;
-		if(! ProjectElement.workspaceBaseUri)
-			return this.resourceUri.path;
-		
-		let thisPath : string = this.resourceUri.path;
-		let wsPath : string = ProjectElement.workspaceBaseUri.path
-
-		let relative = path.relative(wsPath,thisPath);
-		
-		if(relative.startsWith(".."))
-			return thisPath;
-		else
-			return relative;
-
-	}
-
-	public get logicalPath() : string 
-	{
-		let pathElt : string[] = []
-		let pos : ProjectElement | null = this;
-
-		do
-		{
-			pathElt.push(pos.logicalName);
-			pos = pos._parent;
-		} while(pos);
-
-		return pathElt.reverse().join(":");
-
-	}
-
-
-	public get children() : Array<ProjectElement> 
-	{
-		return this._children;
-	}
-
-	public add_child(v : ProjectElement) : ProjectElement | null 
-	{
-		if(v.id == this.id)
-			return null;
-
-		console.log(`Add child ${v.label} with URI path ${v.resourceUri?.fsPath} to folder ${this.label}`);
-		let usedParent : ProjectElement | null = this;
-		if(v.resourceUri)
-		{
-			usedParent = this._getUsedParent(v.resourceUri,true);
-		}
-		if(! usedParent)
-		{
-			// If a failure occured, just fall back to the original parent as a parent.
-			usedParent = this;
-		} 
-		else if(usedParent.id == v.id)
-		{
-			console.error(`Parent lookup returned the new element itself. Defaulting to original parent.`);
-			usedParent = this;
-		}	
-
-		console.log(`Actually use ${usedParent.id} as a parent for ${v.label}`);
-		
-		usedParent._pushChildren(v);
-
-		usedParent.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-		// The responsibility to actually bind the child to its parent is kept to the caller.
-		return usedParent;
-
-		
-	}
-
-
-	/**
-	 * Remove a child from the current node and cleanup the project element tree.
-	 * @param v Child to lookup and remove if exists
-	 * @returns The higher level project element still existing after removal (usually this)
-	 */
-	public removeChild(v : ProjectElement | string) : ProjectElement
-	{
-		if(v instanceof ProjectElement)
-		{
-			if(v._parent == this)
-				v._parent = null;
-			this._children = this._children.filter((elt,_) =>  {return elt !== v});
-			
-			// Also remove the hierarchy, if relevant
-			if(this._children.length == 0 && this._parent)
-				return this._parent.removeChild(this);
-			else
-				return this;
-		}
-		else
-		{
-			// v is string, so lookup by ID and then remove the found child (by ProjectElement call)
-			for(let child of this._children)
-			{
-				if(child.id == v)
-					return this.removeChild(child);
-			}
-
-			return this;
-		}
-
-	}
-
-	/**
-	 * Finds the nearest element of the design from the URI provided.
-	 * @param v URI to lookup
-	 * @returns The project element nearest to the target URI. 
-	 */
-	public lookupUri(v : vscode.Uri, thisDefaultUri ?: vscode.Uri) : ProjectElement | null 
-	{
-
-		let thisUri = this.resourceUri ? this.resourceUri : (thisDefaultUri ? thisDefaultUri :ProjectFolder.workspaceBaseUri);
-		if(! thisUri || ! v)
-			return null;
-
-		let thisPath : string = thisUri.fsPath;
-		let tgtPath : string = v.fsPath;
-
-		if(! tgtPath.startsWith(thisPath))
-			return null;
-
-		let remainingPath = path.relative(thisPath,tgtPath);
-		let neededFolders = remainingPath.split(path.sep).reverse();
-
-		// If remaining path is empty, needed folder will be ['']
-		// So it's better to use "remainingPath" length instead of needed folder length.
-		if(remainingPath.length == 0)
-			return this;
-		if(neededFolders.at(-1) == "..")
-			return null;
-		
-		let retFolder : ProjectElement = this;
-		let tgtUri = thisUri;
-
-		while(neededFolders.length > 0)
-		{
-			let newFolderName = neededFolders.pop();
-			if(newFolderName === undefined)
-				throw Error("Needed folder empty");
-
-			tgtUri = vscode.Uri.joinPath(tgtUri,newFolderName);
-
-			let luResult = retFolder.getChildByLocName(newFolderName);
-			if(luResult)
-			{
-				retFolder = luResult;
-			}
-
-		}
-
-		return retFolder;
-	}
-
-	protected _getUsedParent(v : vscode.Uri, build : boolean = false ) : ProjectElement | null
-	{
-		let thisUri = this.resourceUri ? this.resourceUri : ProjectFolder.workspaceBaseUri;
-		if(! thisUri || ! v)
-			return this;
-
-		let thisPath : string = thisUri.fsPath;
-		let tgtPath : string = v.fsPath;
-
-		let remainingPath : string;
-		// If the path is unrelated to the workspace, keep it as-is to build 
-		// the full path
-		if(tgtPath.startsWith(thisPath))
-			remainingPath = path.relative(thisPath,path.dirname(tgtPath));
-		else 
-			remainingPath = path.dirname(tgtPath);
-
-		let neededFolders = remainingPath.split(path.sep).reverse();
-
-		// If remaining path is empty, needed folder will be ['']
-		// So it's better to use "remainingPath" length instead.
-		if(remainingPath.length == 0)
-			return this;
-		if(neededFolders.at(-1) == "..")
-			return this;
-
-
-		let retFolder : ProjectElement = this;
-		let tgtUri = thisUri;
-
-		if(remainingPath.startsWith("/"))
-		{
-			// If we have an absolute path
-			// The first element of remaining folders will be an empty string, that we remove.
-			neededFolders.pop();
-			tgtUri = vscode.Uri.file("/");
-
-			// Here, we are dealing with the first level of an absolute path.
-			// We need to force the current location (expected a virtual top level)
-			// as a return, otherwise we will infinitely recurse
-			if(neededFolders.length == 1)
-				return this;
-		}
-		
-
-		while(neededFolders.length > 0)
-		{
-			let newFolderName = neededFolders.pop();
-			if(newFolderName === undefined)
-				throw Error("Needed folder empty");
-
-			tgtUri = vscode.Uri.joinPath(tgtUri,newFolderName);
-
-			let luResult = retFolder.getChildByLocName(newFolderName);
-			if(luResult && (luResult instanceof ProjectFolder ))
-			{
-				retFolder = luResult;
-			}
-			else if(build)
-			{
-				retFolder = ProjectFolder.fromUri(tgtUri,retFolder);
-			}
-			else
-			{
-				return null;
-			}
-		}
-
-		return retFolder;
-	}
-
-		/**
-		 * This function is the low level access to the push command for the children
-		 * @param v Child to add to the current node
-		 */
-		protected _pushChildren(v : ProjectElement) : void 
-		{
-			// If the element has no URI or if this URI is not within self, add it.
-			if(! v.resourceUri || (! this.getChildByUri(v.resourceUri)))
-			{
-				this._children.push(v);
-			}
-
-			if(this.collapsibleState == vscode.TreeItemCollapsibleState.None)
-				this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded ;
-		}
-
-	getChildById(id : string ) : ProjectElement | null
-	{
-		for(let child of this._children)
-			if (child.id == id)
-				return child;
-		
-		return null;
-	}
-
-	getChildByLocName(locname : string) : ProjectElement | null 
-	{
-		for(let child of this._children)
-		{
-			if (child.logicalName == locname)
-			{
-				return child;
-			}
-		}
-		return null;
-	}
-
-	getChildByUri(uri : vscode.Uri ) : ProjectElement | null
-	{
-		for(let child of this._children)
-			if (child.resourceUri === uri)
-				return child;
-		
-		return null;
-	}
-}
-
-
-export class ProjectFolder extends ProjectElement {
-	//private _children : Array<ProjectElement> = [];
-	
-	constructor(
-		label: string,
-		public logicalName : string = label,
-		parent ?: ProjectFolder,
-		public resourceUri ?: vscode.Uri,
-		public  collapsibleState ?: vscode.TreeItemCollapsibleState
-	) {
-		super(label, collapsibleState);
-		this.id = label;
-		this.parent = parent;
-		this.contextValue = "folder"
-
-		// Command revealInExplorer is undocumented in the API website...
-		// Information retrieved from Copilot.
-		// More annoying than anything actually...
-		// if(resourceUri)
-		// 	this.command = { command: "revealInExplorer", title: "reveal", arguments: [resourceUri] };
-	};
-	
-	public static fromUri(uri : vscode.Uri, parent ?: ProjectElement) : ProjectFolder
-	{
-		let newFolderName = path.basename(uri.path);
-		let ret =  new ProjectFolder(newFolderName,newFolderName,parent,uri);
-		return ret;
-
-	}
-
-}
-
-export class ProjectFile extends ProjectElement {
-	public defined: boolean = true;
-
-	constructor(
-		public resourceUri: vscode.Uri,
-		parent ?: ProjectFolder
-	) {
-		
-		super(Utils.basename(resourceUri), vscode.TreeItemCollapsibleState.None);
-
-		this.logicalName = Utils.basename(resourceUri);
-		this.tooltip = resourceUri.fsPath;
-		this.parent = parent;
-		this.contextValue = "file"
-
-		if(resourceUri)
-			this.command = { command: "vscode.open", title: "open", arguments: [resourceUri] };
-	};
-	
-	public add_child(v : ProjectElement) : ProjectElement | null {
-		throw Error("File should not have child");
-		return null;
-	}	
-};
 
 // Drag and drop "documentation" from link from https://code.visualstudio.com/updates/v1_66#_tree-drag-and-drop-api
-export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectElement>, vscode.TreeDragAndDropController<ProjectElement> {
+export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProjectElement>, vscode.TreeDragAndDropController<BaseProjectElement> {
 	
 
-	protected static SVExtensions : string[] = 
-		getFileExtensionsForLanguageId("systemverilog").concat(getFileExtensionsForLanguageId("verilog"));
-	
-
-	public static readonly workspaceBaseUri : vscode.Uri | null = vscode.workspace.workspaceFolders ? vscode.workspace.workspaceFolders[0].uri : null;
-	
-	dropMimeTypes = ['text/uri-list'];
-	dragMimeTypes = []; // 
+	protected static SVExtensions : string[] = getFileExtensionsForLanguageId("systemverilog").concat(getFileExtensionsForLanguageId("verilog"));
+		
 	public roots : Map<string,ProjectFolder> = new Map();
 	public registeredProjects : Map<string, HDLProject> = new Map();
 
 	protected _activeProject : string | null = null;
 	
 
-	static addExternalFolder(parent : ProjectElement) : ProjectFolder
+	static addExternalFolder(parent : BaseProjectElement) : ProjectFolder
 	{
 		return new ProjectFolder("External","ext",parent,undefined,vscode.TreeItemCollapsibleState.None)
 	}
 	
+	// #############################################################################
+	// Constructor
+	// #############################################################################
+	
+
 	constructor() {}
 	
+	// #############################################################################
+	// Interface specialization
+	// #############################################################################
+	
+	dropMimeTypes = ['text/uri-list'];
+	dragMimeTypes = []; // 
+
 	getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
 		return element;
 	}
 	
-	getChildren(element?: ProjectElement): Thenable<Array<ProjectElement>> {
+	getChildren(element?: BaseProjectElement): Thenable<Array<BaseProjectElement>> {
 		if(element) {
 			console.log("Get elements from " + element.label + " giving " + element.children.map((x) => {return `'${x.id}': ${x.label}`}));
 			return Promise.resolve(element.children);
@@ -439,7 +60,7 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 		}
 	}
 
-	async handleDrop(target: ProjectElement | undefined, dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
+	async handleDrop(target: BaseProjectElement | undefined, dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): Promise<void> {
 		console.log(`An element got dropped ! ${dataTransfer}`);
 		let prjName : string | null | undefined = target?.root?.id;
 
@@ -466,6 +87,11 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 		
 		return Promise.resolve();
 	}
+
+
+	// #############################################################################
+	// Additional functions
+	// #############################################################################
 
 
 	/**
@@ -509,15 +135,15 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 		let usedUri : vscode.Uri;
 		if(path.startsWith("/"))
 			usedUri = vscode.Uri.file(path)
-			
 		else
 		{
+			let ws_uri = get_workspace_base_uri();
 			// If relative without a workspace open, don't know what we are doing here...
-			if(! ProjectFileTreeProvider.workspaceBaseUri)
+			if(! ws_uri)
 				throw Error("Relative path detected without open workspace");
 
 			// Append the relative path to the current workspace.
-			usedUri = vscode.Uri.joinPath(ProjectFileTreeProvider.workspaceBaseUri,path);
+			usedUri = vscode.Uri.joinPath(ws_uri,path);
 			
 		}
 		return usedUri;
@@ -534,7 +160,8 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 	 */
 	public async addFileToProject(prj : string, fpath : vscode.Uri, fromLoad : boolean = false) : Promise<ProjectFile>
 	{
-		if(! ProjectFileTreeProvider.workspaceBaseUri)
+		let ws_uri = get_workspace_base_uri();
+		if(! ws_uri)
 			throw Error("A workspace shall be opened beforehand.");
 
 		console.log(`Add file to project ${prj} : ${fpath.fsPath}`);
@@ -552,8 +179,8 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 			return Promise.reject();
 		}
 	
-		let destination : ProjectElement; 
-		let isExternal : boolean = ! fpath.path.startsWith(ProjectFileTreeProvider.workspaceBaseUri.path);
+		let destination : BaseProjectElement; 
+		let isExternal : boolean = ! fpath.path.startsWith(ws_uri.path);
 
 
 		if(ProjectFileTreeProvider.SVExtensions.includes(path.extname(fpath.path)))
@@ -589,9 +216,9 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 		return Promise.resolve(ret);
 	}
 
-	protected getProjectBaseDirForFileKind(prjRoot : ProjectElement, kind : ProjectFileKind, external : boolean = false)
+	protected getProjectBaseDirForFileKind(prjRoot : BaseProjectElement, kind : ProjectFileKind, external : boolean = false)
 	{
-		let ret : ProjectElement | null;
+		let ret : BaseProjectElement | null;
 		switch(kind)
 		{
 			case ProjectFileKind.Source :
@@ -649,7 +276,7 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 	}
 
 
-	public removePrjElement(elt : ProjectElement)
+	public removePrjElement(elt : BaseProjectElement)
 	{
 		if(elt.parent)
 		{
@@ -676,7 +303,7 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 
 	}
 	
-	public getProjectFromElement(elt : ProjectElement) : HDLProject | null {
+	public getProjectFromElement(elt : BaseProjectElement) : HDLProject | null {
 		return this.getProjectFromName(elt.root.logicalName);
 	}
 
@@ -708,8 +335,8 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<ProjectE
 		this.refresh();
 	}
 
-	private _onDidChangeTreeData: vscode.EventEmitter<ProjectElement | undefined | null | void> = new vscode.EventEmitter<ProjectElement | undefined | null | void>();
-	readonly onDidChangeTreeData: vscode.Event<ProjectElement | undefined | null | void> = this._onDidChangeTreeData.event;
+	private _onDidChangeTreeData: vscode.EventEmitter<BaseProjectElement | undefined | null | void> = new vscode.EventEmitter<BaseProjectElement | undefined | null | void>();
+	readonly onDidChangeTreeData: vscode.Event<BaseProjectElement | undefined | null | void> = this._onDidChangeTreeData.event;
 	
 	refresh(): void {
 		console.log("Refresh PFTP");

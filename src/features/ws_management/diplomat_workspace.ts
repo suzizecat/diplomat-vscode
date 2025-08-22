@@ -2,7 +2,7 @@ import { workspace, ExtensionContext, LogOutputChannel, commands, window, TreeVi
 import { Uri } from "vscode";
 
 import { DiplomatConfigNew, DiplomatProject } from "../../exchange_types";
-import { ProjectElement, ProjectFileTreeProvider } from "./project_files_view";
+import { BaseProjectElement, ProjectFileTreeProvider } from "./project_files_view";
 import { HDLProject } from "./project";
 import { send } from "node:process";
 import path = require("node:path");
@@ -32,16 +32,16 @@ export class DiplomatWorkspace
     }
     
 
-    public getProjectFromElement(elt : ProjectElement) : HDLProject | null {
+    public getProjectFromElement(elt : BaseProjectElement) : HDLProject | null {
         return this._projectFilesManager.getProjectFromElement(elt);
     }
 
-    public setActiveProject(prj : HDLProject | string | ProjectElement | null | undefined) {
+    public setActiveProject(prj : HDLProject | string | BaseProjectElement | null | undefined) {
         if(prj instanceof HDLProject)
         {
          this._projectFilesManager.setActiveProject(prj.name);
         }
-        else if(prj instanceof ProjectElement)
+        else if(prj instanceof BaseProjectElement)
         {
             this.setActiveProject(this._projectFilesManager.getProjectFromElement(prj)); 
         }
@@ -55,7 +55,7 @@ export class DiplomatWorkspace
         }
     }
 
-    public sendProjectToLSP(prj : HDLProject | string | ProjectElement | null | undefined) {
+    public sendProjectToLSP(prj : HDLProject | string | BaseProjectElement | null | undefined) {
         if(prj instanceof HDLProject)
         {
             let toSend : DiplomatProject = prj.toJSON();
@@ -66,7 +66,7 @@ export class DiplomatWorkspace
 
             commands.executeCommand("diplomat-server.prj.set-project",toSend);
         }
-        else if(prj instanceof ProjectElement)
+        else if(prj instanceof BaseProjectElement)
         {
             this.sendProjectToLSP(this._projectFilesManager.getProjectFromElement(prj)); 
         }
@@ -244,7 +244,7 @@ export class DiplomatWorkspace
         })
     }
 
-    public removeProjectElement(elt : ProjectElement)
+    public removeProjectElement(elt : BaseProjectElement)
     {
        this._projectFilesManager.removePrjElement(elt);
        this.saveConfig();

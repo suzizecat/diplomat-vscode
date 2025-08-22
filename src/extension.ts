@@ -19,7 +19,7 @@ import { DesignElement, DesignHierarchyTreeProvider } from "./gui/designExplorer
 import { TextAnnotator } from './text_annotator';
 
 import { DiplomatTestController } from './tests_controller';
-import { ProjectElement, ProjectFile, ProjectFileTreeProvider } from './features/ws_management/project_files_view';
+import { BaseProjectElement, ProjectFile, ProjectFileTreeProvider } from './features/ws_management/project_files_view';
 import { DiplomatWorkspace } from './features/ws_management/diplomat_workspace';
 //import * as globalvar from "./global";
 // this method is called when your extension is activated
@@ -310,14 +310,14 @@ export function activate(context: ExtensionContext) {
 		designHierarchyDataProvider.refresh();
 	}));
 
-	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.remove-file", async (target ?: ProjectElement) => {
+	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.remove-file", async (target ?: BaseProjectElement) => {
 		if(target)
 		{
 			diplomatWorkspace.removeProjectElement(target);
 		}
 	}));
 
-	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.set-project", async (target ?: ProjectElement) => {
+	context.subscriptions.push(commands.registerCommand("diplomat-host.prj.set-project", async (target ?: BaseProjectElement) => {
 		
 		diplomatWorkspace.setActiveProject(target);
 		diplomatWorkspace.sendProjectToLSP(target);

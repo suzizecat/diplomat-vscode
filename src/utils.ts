@@ -93,3 +93,8 @@ export async function does_path_exist(path : vscode.Uri) : Promise<boolean>
     }
     
 }
+
+export function get_workspace_base_uri() : vscode.Uri | undefined
+{
+    return vscode.workspace.workspaceFolders?.at(0)?.uri;
+}

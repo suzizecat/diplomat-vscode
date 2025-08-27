@@ -45,7 +45,7 @@ export class WorkspaceManagement extends BaseFeature {
 
 		this._bind_events();
 
-		vscode.window.createTreeView("diplomat-prj", this._workspace.treeViewProvider);
+		vscode.window.createTreeView("diplomat-prj", {treeDataProvider : this._view, dragAndDropController : this._view});
 
 	}
 

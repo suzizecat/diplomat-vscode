@@ -15,6 +15,13 @@ export enum ProjectFileKind {
 	Other
 }
 
+/**
+ * Lightweight container to keep stuff somewhat tidy in {@link ProjectFileTreeProvider}
+ */
+class _PFTPEvents {
+	public file_dropped = new vscode.EventEmitter<{project : string, element : vscode.Uri[]}>();
+}
+
 
 // Drag and drop "documentation" from link from https://code.visualstudio.com/updates/v1_66#_tree-drag-and-drop-api
 export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProjectElement>, vscode.TreeDragAndDropController<BaseProjectElement> {
@@ -23,7 +30,7 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 	protected static SVExtensions : string[] = getFileExtensionsForLanguageId("systemverilog").concat(getFileExtensionsForLanguageId("verilog"));
 		
 	public roots : Map<string,ProjectFolder> = new Map();
-	public registeredProjects : Map<string, HDLProject> = new Map();
+	// public registeredProjects : Map<string, HDLProject> = new Map();
 
 	protected _activeProject : string | null = null;
 	
@@ -32,6 +39,12 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 	{
 		return new ProjectFolder("External","ext",parent,undefined,vscode.TreeItemCollapsibleState.None)
 	}
+
+	// Events
+	// ----------------------------------------------------------------------------
+	protected _evt : _PFTPEvents = new _PFTPEvents();
+	
+	public get on_file_dropped() {return this._evt.file_dropped.event;}
 	
 	// #############################################################################
 	// Constructor
@@ -84,7 +97,7 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 		{
 			await this.addFileToProject(prjName,uri);
 		}
-		
+		this._evt.file_dropped.fire({project: prjName, element : droppedUri});
 		return Promise.resolve();
 	}
 
@@ -104,11 +117,9 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 	*/
 	public async processProject(prj : HDLProject) {
 		console.log(`Starting handling project ${prj.name}...`);
-		if(this.registeredProjects.has(prj.name))
+		if(this.roots.has(prj.name))
 			this.removeProject(prj.name);
 		
-		
-		this.registeredProjects.set(prj.name,prj);
 		let root = new ProjectFolder(prj.name,prj.name);
 		root.contextValue = "project";
 		this.roots.set(root.id,root);
@@ -204,14 +215,6 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 
 		let ret = new ProjectFile(fpath,nearest);
 
-		if(! fromLoad)
-		{
-			let thePrj = this.registeredProjects.get(prj);
-			let relpath = ret.prjRelativePath;
-			if(relpath && thePrj)
-				thePrj.addFileToProject(relpath);
-		}
-
 		this.refresh();
 		return Promise.resolve(ret);
 	}
@@ -256,7 +259,6 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 
 	public removeProject(prjName : string) {
 		this.roots.delete(prjName);
-		this.registeredProjects.delete(prjName);
 	}
 
 	public renameProject(oldName : string, newName : string) {
@@ -268,10 +270,10 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 		if(! prj)
 			return;
 
-		this.removeProject(oldName);
+		// this.removeProject(oldName);
 
 		prj.name = newName;
-		this.processProject(prj);
+		// this.processProject(prj);
 
 	}
 
@@ -281,16 +283,11 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 		if(elt.parent)
 		{
 			let tgtPrjName = elt.root.logicalName;
-			
-			let tgtPrj : HDLProject | undefined = this.registeredProjects.get(tgtPrjName);
 			let rel = elt.prjRelativePath;
 			
-			if(! tgtPrj)
-				return;
 
 			if(! rel)
 				return;
-			tgtPrj.removeFileFromProject(rel);
             elt.parent.removeChild(elt);
 		}
 		else
@@ -303,12 +300,12 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 
 	}
 	
-	public getProjectFromElement(elt : BaseProjectElement) : HDLProject | null {
-		return this.getProjectFromName(elt.root.logicalName);
-	}
+	// public getProjectFromElement(elt : BaseProjectElement) : HDLProject | null {
+	// 	return this.getProjectFromName(elt.root.logicalName);
+	// }
 
-	public getProjectFromName(name : string) : HDLProject | null {
-		let ret = this.registeredProjects.get(name);
+	public getProjectFromName(name : string) : ProjectFolder | null {
+		let ret = this.roots.get(name);
 		return ret ? ret : null;
 	}
 
@@ -328,9 +325,6 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 			{
 				prj.iconPath = undefined;
 			}
-
-			this.registeredProjects.get(prj.logicalName)?.setActive(prj.iconPath ? true : false);
-
 		}
 		this.refresh();
 	}

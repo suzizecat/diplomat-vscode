@@ -17,22 +17,22 @@ import { commands } from "vscode";
  *
  * @alpha
  */
-export class HDLProject {
+export class HDLProject implements DiplomatProject{
 
     // !Static Methods
 
     // !Private (and/or readonly) Properties
     
     /** Indicate that the project is set active by the user */
-    public isActive : boolean = false;
+    public active : boolean = false;
     /** Indicate that the project is deemed valid (properly constructed) */
     protected _isValid : boolean = false;
     /** List of all source files in the project */
-    protected _sourceList : string[] = [];
+    public sourceList : string[] = [];
     /** List of include directory */
-    protected _includeDirs : string[] = [];
+    public includeDirs : string[] = [];
     /** Name of the top-level entity if any */
-    protected _topLevel ?: HDLModule | null;
+    public topLevel ?: HDLModule | null;
 
 
     /** List of all tests managers linked to the project */
@@ -45,33 +45,26 @@ export class HDLProject {
 
     public static fromDiplomatProject(prj : DiplomatProject) : HDLProject
     {
-        let ret : HDLProject = new HDLProject(prj.name);
-        ret.topLevel = prj.topLevel;
-        ret.isActive = prj.active;
-        ret._sourceList = prj.sourceList;
-        ret._includeDirs = prj.includeDirs;
-
+        let ret : HDLProject = new HDLProject();
+        Object.assign(ret,prj);
+        
         return ret;
     }
 
     // !Getters and Setters
     
     public get sourceFiles() {
-        return this._sourceList.values();
+        return this.sourceList.values();
     }
     
 
-    public set topLevel(top : HDLModule | null | undefined) {
-        this._topLevel = top;
-    }
-
     public setActive(newState : boolean)
     {
-        this.isActive = newState;
+        this.active = newState;
     }
     // !Public Instance Methods
     toJSON() : DiplomatProject {
-        return this._forSave();
+        return this as DiplomatProject;
     }
 
     /**
@@ -79,13 +72,13 @@ export class HDLProject {
      */
     public addFileToProject(filepath : string) 
     {
-        if(! this._sourceList.includes(filepath))
-            this._sourceList.push(filepath);
+        if(! this.sourceList.includes(filepath))
+            this.sourceList.push(filepath);
     }
 
     public removeFileFromProject(filepath : string)
     {
-        this._sourceList = this._sourceList.filter((elt,_) =>  {return elt !== filepath});
+        this.sourceList = this.sourceList.filter((elt,_) =>  {return elt !== filepath});
     }
 
     // !Private Subroutines
@@ -96,11 +89,11 @@ export class HDLProject {
     protected _forSave() : DiplomatProject
     {
         return {
-            topLevel: this._topLevel,
+            topLevel: this.topLevel,
             name: this.name,
-            sourceList: this._sourceList,
-            includeDirs : this._includeDirs,
-            active : this.isActive
+            sourceList: this.sourceList,
+            includeDirs : this.includeDirs,
+            active : this.active
         }
     }
 
@@ -108,11 +101,11 @@ export class HDLProject {
     {
 
         let ret : DiplomatProject = {
-            topLevel: this._topLevel ? this._topLevel : undefined,
+            topLevel: this.topLevel ? this.topLevel : undefined,
             name: this.name,
-            sourceList: this._sourceList,
-            includeDirs : this._includeDirs,
-            active : this.isActive
+            sourceList: this.sourceList,
+            includeDirs : this.includeDirs,
+            active : this.active
         }
 
 

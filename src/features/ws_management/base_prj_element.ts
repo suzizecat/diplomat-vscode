@@ -49,6 +49,16 @@ export abstract class BaseProjectElement extends vscode.TreeItem
     // protected _is_virtual : boolean = false;
     // public get is_virtual() {return this._is_virtual;}
 
+    public get name() : string { return this.logicalName; }
+    public set name(value : string) 
+    { 
+        if(value != this.logicalName)
+        {
+            this.logicalName = value;
+            this.regenerateId();
+        } 
+    }
+
 
     public set parent(nParent : BaseProjectElement | null | undefined) 
     {
@@ -74,6 +84,9 @@ export abstract class BaseProjectElement extends vscode.TreeItem
     {
         let idBase = this._parent ? `${this._parent.logicalPath}` : "";
         this.id = `${idBase}:${this.logicalName}`;
+
+        for(let child of this._children)
+            child.regenerateId();
     }
 
     public get root() : BaseProjectElement
@@ -428,13 +441,28 @@ export class ProjectFolder extends BaseProjectElement {
         // 	this.command = { command: "revealInExplorer", title: "reveal", arguments: [resourceUri] };
     };
     
-    public static fromUri(uri : vscode.Uri, parent ?: BaseProjectElement) : ProjectFolder
+    public static fromUri(uri : vscode.Uri, parent ?: ProjectFolder) : ProjectFolder
     {
         let newFolderName = path.basename(uri.path);
         let ret =  new ProjectFolder(newFolderName,newFolderName,parent,uri);
         return ret;
 
     }
+
+    
+    public get name() : string { return this.logicalName; }
+    public set name(value : string) 
+    { 
+        if(value != this.logicalName)
+        {
+            this.logicalName = value;
+            this.label = value;
+            this.regenerateId();
+        } 
+    }
+
+    
+    
 
 }
 

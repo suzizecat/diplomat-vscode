@@ -21,6 +21,7 @@ import * as dconst from "../../constants" ;
 import { DiplomatConfigNew } from "../../exchange_types";
 import { ExtensionEnvironment } from "../base_feature";
 import { does_path_exist } from "../../utils";
+import { HDLProject } from "./project";
 
 
 /**
@@ -28,6 +29,8 @@ import { does_path_exist } from "../../utils";
  */
 class _WSStateEvents {
 	public config_loaded = new EventEmitter<Uri>();
+	public prj_registered = new EventEmitter<HDLProject[]>();
+	public prj_removed = new EventEmitter<HDLProject[]>();
 }
 
 
@@ -37,14 +40,18 @@ export class WorkspaceState {
 	// Variables declaration
 	// #############################################################################
 
-    public _config : DiplomatConfigNew;
+    protected _config : DiplomatConfigNew;
 	public get config() {return this._config;}
+
+	protected _registered_projects : Map<string, HDLProject> = new Map();
 		
 	// Events
 	// ----------------------------------------------------------------------------
 	protected _evt : _WSStateEvents;
 	
 	public get on_config_loaded() {return this._evt.config_loaded.event;}
+	public get on_prj_registered() {return this._evt.prj_registered.event;}
+	public get on_prj_removed() {return this._evt.prj_removed.event;}
 
 	
     protected _config_file_path ?: Uri;
@@ -157,4 +164,85 @@ export class WorkspaceState {
             return Promise.reject();
         }
     }
+
+	protected _refresh_projects_from_config()
+	{
+		this._registered_projects.clear();
+		for(let prj of this._config.projects)
+		{
+
+		}
+	}
+
+	/**
+	 * This function will register provided project in the workspace state.
+	 * @param prj_list The project (or list of projects) to register
+	 */
+	public register_projects(prj_list : HDLProject | HDLProject[])
+	{
+		if(! Array.isArray(prj_list))
+			prj_list = [prj_list];
+
+		let added_projects : HDLProject[] = [];
+		for(let prj of prj_list)
+		{
+			this._env.logger?.info(`Registering project ${prj.name}`);
+			if(! this._registered_projects.has(prj.name))
+			{
+				this._registered_projects.set(prj.name,prj);
+				added_projects.push(prj);
+			}
+		}
+
+		if(added_projects.length > 0)
+		{
+			this._evt.prj_registered.fire(added_projects);
+		}
+	}
+
+	/**
+	 * Remove all provided projects from the workspace state.
+	 * @param prj_list List of projects (matched by project name, as registered) to remove.
+	 * Remove everything if not specififed.
+	 */
+	public remove_projects(prj_list ?: HDLProject | Array<HDLProject|string> | string)
+	{
+		let clean_prj_list :  Array<HDLProject| string>;
+		let removed_projects : Array<HDLProject> = [];
+
+		if(! prj_list)
+		{
+			removed_projects = Array.from(this._registered_projects.values());
+			this._registered_projects.clear();
+		}
+		else
+		{
+			if(! Array.isArray(prj_list))
+				clean_prj_list = [prj_list];
+			else
+				clean_prj_list = prj_list
+			
+
+			for(let prj of clean_prj_list)
+			{
+				let confirmed_tgt : string;
+				
+				if(prj instanceof HDLProject)
+					confirmed_tgt = prj.name;
+				else
+					confirmed_tgt = prj;
+
+				let to_del_prj = this._registered_projects.get(confirmed_tgt);
+				if(to_del_prj)
+				{
+					this._registered_projects.delete(confirmed_tgt);
+					removed_projects.push(to_del_prj);
+				}
+			}
+		}
+
+		if(removed_projects.length > 0)
+			this._evt.prj_removed.fire(removed_projects);
+	} 
+
  }

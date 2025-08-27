@@ -18,6 +18,7 @@
 
 import * as vscode from 'vscode';
 import * as lsp from 'vscode-languageclient';
+import path = require('path');
 
 // Example usage:
 // const extensions = getFileExtensionsForLanguageId('typescript');
@@ -97,4 +98,19 @@ export async function does_path_exist(path : vscode.Uri) : Promise<boolean>
 export function get_workspace_base_uri() : vscode.Uri | undefined
 {
     return vscode.workspace.workspaceFolders?.at(0)?.uri;
+}
+
+export function get_prj_filepath_from_uri(fpath: vscode.Uri, ref_loc?: vscode.Uri) : string
+{
+    if (!ref_loc)
+        ref_loc = get_workspace_base_uri();
+
+    if (!ref_loc)
+        throw new Error("No workspace available and not reference location provided.");
+    
+    let tgt_path = path.relative(ref_loc.fsPath, fpath.fsPath);
+    if (tgt_path.startsWith(".."))
+        return fpath.fsPath;
+    else
+        return tgt_path;
 }

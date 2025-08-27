@@ -25,8 +25,6 @@ export class HDLProject implements DiplomatProject{
     
     /** Indicate that the project is set active by the user */
     public active : boolean = false;
-    /** Indicate that the project is deemed valid (properly constructed) */
-    protected _isValid : boolean = false;
     /** List of all source files in the project */
     public sourceList : string[] = [];
     /** List of include directory */
@@ -36,7 +34,7 @@ export class HDLProject implements DiplomatProject{
 
 
     /** List of all tests managers linked to the project */
-    protected _testsHandlers : BaseProjectTests[] = [];
+    // protected _testsHandlers : BaseProjectTests[] = [];
 
 
     // !Constructor Function
@@ -70,7 +68,7 @@ export class HDLProject implements DiplomatProject{
     /**
      * addFileToProject
      */
-    public addFileToProject(filepath : string) 
+    public addFileToProject(filepath : string ) 
     {
         if(! this.sourceList.includes(filepath))
             this.sourceList.push(filepath);

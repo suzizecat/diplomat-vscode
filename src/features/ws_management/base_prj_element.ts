@@ -146,6 +146,17 @@ export abstract class BaseProjectElement extends vscode.TreeItem
         return this._children;
     }
 
+    public get leaves(): Array<BaseProjectElement>
+    {
+        if (this._children.length == 0)
+            return [this]
+        else
+        {
+            let ret: Array<BaseProjectElement> = []
+            return ret.concat(...this.children.map((elt) => { return elt.leaves }));
+        }
+    }
+
 
     /**
      * This function adds a child to the current element.

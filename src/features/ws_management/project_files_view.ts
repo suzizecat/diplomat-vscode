@@ -124,13 +124,10 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 		root.contextValue = "project";
 		this.roots.set(root.id,root);
 			
-		
 		for(let file of prj.sourceFiles)
 		{
-			
 			let usedUri = this.getUriFromfilePath(file);
 			await this.addFileToProject(root.id,usedUri,true);
-
 		}
 		
 	}
@@ -282,18 +279,20 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 	{
 		if(elt.parent)
 		{
-			let tgtPrjName = elt.root.logicalName;
 			let rel = elt.prjRelativePath;
-			
 
 			if(! rel)
 				return;
             elt.parent.removeChild(elt);
 		}
-		else
+		else if(elt.kind === ProjectElementKind_t.Project)
 		{
 			// We want to remove a Project
 			this.removeProject(elt.logicalName);
+		}
+		else
+		{
+			return;
 		}
 		this.refresh();
 

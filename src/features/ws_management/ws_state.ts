@@ -20,7 +20,7 @@ import { EventEmitter, Uri, workspace , Event} from "vscode";
 import * as dconst from "../../constants" ;
 import { DiplomatConfigNew } from "../../exchange_types";
 import { ExtensionEnvironment } from "../base_feature";
-import { does_path_exist } from "../../utils";
+import * as utils from "../../utils";
 import { HDLProject } from "./project";
 
 
@@ -31,6 +31,8 @@ class _WSStateEvents {
 	public config_loaded = new EventEmitter<Uri>();
 	public prj_registered = new EventEmitter<HDLProject[]>();
 	public prj_removed = new EventEmitter<HDLProject[]>();
+	public prj_updated = new EventEmitter<HDLProject[]>();
+	public prj_activated = new EventEmitter<HDLProject>();
 }
 
 
@@ -52,6 +54,7 @@ export class WorkspaceState {
 	public get on_config_loaded() {return this._evt.config_loaded.event;}
 	public get on_prj_registered() {return this._evt.prj_registered.event;}
 	public get on_prj_removed() {return this._evt.prj_removed.event;}
+	public get on_prj_updated() {return this._evt.prj_updated.event;}
 
 	
     protected _config_file_path ?: Uri;
@@ -76,6 +79,10 @@ export class WorkspaceState {
 
 
 
+	/**
+	 * This function ensure that the config file is in a sane state.
+	 * It means that the file exists and is initialized.
+	 */
     protected async _setup_config_file()
 	{
 
@@ -90,7 +97,7 @@ export class WorkspaceState {
 				throw new Error("Trying to work with workspace features without an active workspace.");
 			}
 
-			if( ! await does_path_exist(this._env.context.storageUri))
+			if( ! await utils.does_path_exist(this._env.context.storageUri))
 			{
 				await workspace.fs.createDirectory(this._env.context.storageUri);
 			}
@@ -105,10 +112,8 @@ export class WorkspaceState {
 		this._env.logger?.info(`Selected workspace file ${this._config_file_path.fsPath}`);
 
 		// Initialize the file
-		if(! await does_path_exist(this._config_file_path))
+		if(! await utils.does_path_exist(this._config_file_path))
 			workspace.fs.writeFile(this._config_file_path,new TextEncoder().encode(JSON.stringify(this._config,undefined,4)));
-		else
- 			this.load();
 	}
 
 
@@ -126,6 +131,7 @@ export class WorkspaceState {
 		if(! path)
 			throw new Error("No path to save the configuration");
 
+		this._refresh_projects_to_config();
 		workspace.fs.writeFile(path,new TextEncoder().encode(JSON.stringify(this._config,undefined,4)));
 	}
 
@@ -149,11 +155,12 @@ export class WorkspaceState {
 
 		 try 
 		 {
-            await workspace.fs.readFile(path).then(
-                (data) => {
-                    this._config = JSON.parse(new TextDecoder().decode(data));
-                }
-            )
+			await workspace.fs.readFile(path).then(
+				(data) => {
+					this._config = JSON.parse(new TextDecoder().decode(data));
+				}
+			);
+			 this._refresh_projects_from_config();
 			this._evt.config_loaded.fire(path);
             return Promise.resolve();
         } 
@@ -165,13 +172,23 @@ export class WorkspaceState {
         }
     }
 
+
+	/**
+	 * Align the registered projects from the loaded configuration.
+	 */
 	protected _refresh_projects_from_config()
 	{
-		this._registered_projects.clear();
-		for(let prj of this._config.projects)
-		{
+		this.remove_projects();
+		this.register_projects(this._config.projects.map((prj) => HDLProject.fromDiplomatProject(prj) ));
+	}
 
-		}
+	/**
+	 * Update the configuration with the registered projects.
+	 * This should be used every time the configuration is saved.
+	 */
+	protected _refresh_projects_to_config()
+	{
+		this._config.projects = Array.from(this._registered_projects.values());
 	}
 
 	/**
@@ -193,6 +210,8 @@ export class WorkspaceState {
 				added_projects.push(prj);
 			}
 		}
+
+		this._refresh_projects_to_config();
 
 		if(added_projects.length > 0)
 		{
@@ -244,5 +263,49 @@ export class WorkspaceState {
 		if(removed_projects.length > 0)
 			this._evt.prj_removed.fire(removed_projects);
 	} 
+
+	/**
+	 * 
+	 * @param project Project to add the files into
+	 * @param files Files URI to add. Will be converted to appropriate path with regards to the workspace.
+	 */
+	public add_files(project: string, files: Uri[])
+	{
+		let tgt_prj = this._registered_projects.get(project);
+
+		if (!tgt_prj)
+			throw new Error(`Invalid project name ${project}`);
+
+		for (let fpath of files)
+			tgt_prj.addFileToProject(utils.get_prj_filepath_from_uri(fpath));
+
+		this._evt.prj_updated.fire([tgt_prj]);
+	}
+
+	/**
+	 * 
+	 * @param project Project to remove the files from
+	 * @param files Files URI to remove from the project. 
+	 */
+	public remove_files(project: string, files: Uri[])
+	{
+		let tgt_prj = this._registered_projects.get(project);
+
+		if (!tgt_prj)
+			throw new Error(`Invalid project name ${project}`);
+
+		for (let fpath of files)
+			tgt_prj.removeFileFromProject(utils.get_prj_filepath_from_uri(fpath));
+
+		this._evt.prj_updated.fire([tgt_prj]);
+	}
+
+	public set_active_project(project ?: string)
+	{
+		if (!project)
+		{
+			
+		}
+	}
 
  }

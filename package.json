@@ -3,7 +3,7 @@
   "displayName": "diplomat-host",
   "description": "",
   "publisher": "jfaucher",
-  "version": "0.4.0-dev.1",
+  "version": "0.4.0-dev.2",
   "repository": {},
   "engines": {
     "vscode": "^1.81.0"
@@ -191,6 +191,10 @@
       {
         "command": "diplomat-server.pull-config",
         "title": "Save the configuration from the server"
+      },
+      {
+        "command": "diplomat-host.save-config",
+        "title": "Diplomat: Save the configuration"
       },
       {
         "command": "diplomat-server.push-config",
@@ -427,7 +431,8 @@
   "scripts": {
     "yj": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json",
     "precompile" : "npm run yj && npm run check-types",
-    "compile": "npm run precompile && node esbuild.js",
+    "manual-compile": "npm run precompile && node esbuild.js",
+    "compile": "node esbuild.js",
     "check-types" : "tsc --noEmit",
     "vscode:prepublish": "npm run package",
     "watch": "npm-run-all -p watch:*",

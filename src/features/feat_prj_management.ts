@@ -19,13 +19,12 @@
 import * as vscode from 'vscode'; // Use VSCode to keep the separation when using "workspace"
 import * as dconst from "../constants" ;
 import { BaseFeature, ExtensionEnvironment } from "./base_feature";
-import { DiplomatWorkspace } from "./ws_management/diplomat_workspace";
 import { ProjectFileTreeProvider } from "./ws_management/project_files_view";
-import { DiplomatConfigNew, DiplomatProject, HDLModule, ModuleBlackBox } from "../exchange_types";
+import {DiplomatProject, HDLModule, ModuleBlackBox } from "../exchange_types";
 import * as utils from "../utils";
 import { WorkspaceState } from './ws_management/ws_state';
 import { HDLProject } from './ws_management/project';
-import { BaseProjectElement, ProjectElementKind_t, ProjectFile } from './ws_management/base_prj_element';
+import { BaseProjectElement, ProjectFile } from './ws_management/base_prj_element';
 
 
 
@@ -55,26 +54,27 @@ export class FeatureProjectManagement extends BaseFeature {
 	protected _bind_events()
 	{
 		// Here perform the event bindings
-		this._model.on_prj_registered(this._load_projects_handler);
-		this._model.on_prj_updated((prj) => this.send_projects_to_lsp(prj.map(p => p.name)));
-		this._model.on_prj_activated((prj) => this.send_projects_to_lsp([prj.name]));
+		this._model.on_prj_registered(this._load_projects_handler, this);
+		this._model.on_prj_updated((prj) => this.send_projects_to_lsp(prj.map(p => p.name)),this);
+		this._model.on_prj_activated((prj) => this.send_projects_to_lsp([prj.name]),this);
 	}
 
 	protected _bind_commands()
 	{
-		this.bind("diplomat-host.prj.create-project", this.add_new_project);
-		this.bind("diplomat-host.prj.create-project-from-top", this.create_prj_from_top_file);
-		this.bind("diplomat-host.prj.remove-file", this._remove_element_from_prj);
-		this.bind("diplomat-host.prj.set-project", this.set_active_project);
-		this.bind("diplomat-host.set-top", this.set_top_from_file);
+		this.bind("diplomat-host.prj.create-project", this.add_new_project, this);
+		this.bind("diplomat-host.prj.create-project-from-top", this.create_prj_from_top_file, this);
+		this.bind("diplomat-host.prj.remove-file", this._remove_element_from_prj, this);
+		this.bind("diplomat-host.prj.set-project", this.set_active_project, this);
+		this.bind("diplomat-host.set-top", this.set_top_from_file, this);
 		
-		this.bind("diplomat-host.show-config", this.open_config_file);
+		this.bind("diplomat-host.save-config", this.save_config, this);
+		this.bind("diplomat-host.show-config", this.open_config_file, this);
 	}
 
 	protected _build_gui()
 	{
 		vscode.window.createTreeView("diplomat-prj", { treeDataProvider: this._view, dragAndDropController: this._view });
-		this._view.refresh();
+		// this._view.refresh();
 	}
 
 	public async start()
@@ -348,6 +348,12 @@ export class FeatureProjectManagement extends BaseFeature {
 			}, () => { });
 		}
 
+	}
+
+	public async save_config()
+	{
+		this.logger?.info("Configuration save requested.")
+		await this._model.save();
 	}
 	
 

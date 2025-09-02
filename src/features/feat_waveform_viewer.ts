@@ -54,7 +54,10 @@ export class FeatureWaveformViewer extends BaseFeature {
 	 */
 	protected _curr_location : DesignElement | null = null;
 	
-	/** Contains all symbols for the current location. */
+	/** Contains all symbols for the current location. 
+	 * This is valid only when a waveform viewer is active and updated through calls to
+	 * {@link update_annotations}
+	*/
 	protected _curr_location_symbols: string[] | null = null;
 
 	/**
@@ -86,12 +89,13 @@ export class FeatureWaveformViewer extends BaseFeature {
 
 		commands.executeCommand('setContext', 'diplomat-host:supportedWavesFiles', [".vcd", ".fst", ".gtkw", ".ghw"]);
 
-		this.bind("diplomat-host.open-waves",this.open_wave);
-		this.bind("diplomat-host.waves.reload", this.refresh_waves);
-		this.bind("diplomat-host.waves.enable-follow",() => {this.set_follow_mode(true);});
-		this.bind("diplomat-host.waves.disable-follow",() => {this.set_follow_mode(false);});
-		this.bind("diplomat-host.waves.refresh-annotations", this.update_annotations);
-		this.bind("diplomat-host.waves.clear-annotations", this.clear_annotations);
+		this.bind("diplomat-host.open-waves",this.open_wave, this);
+		this.bind("diplomat-host.waves.reload", this.refresh_waves, this);
+		this.bind("diplomat-host.waves.enable-follow",() => {this.set_follow_mode(true);}, this);
+		this.bind("diplomat-host.waves.disable-follow",() => {this.set_follow_mode(false);}, this);
+		this.bind("diplomat-host.waves.refresh-annotations", this.update_annotations, this);
+		this.bind("diplomat-host.waves.clear-annotations", this.clear_annotations, this);
+		this.bind("diplomat-host.waves.add-signal", this.clear_annotations, this);
 	}
 
 	
@@ -249,7 +253,7 @@ export class FeatureWaveformViewer extends BaseFeature {
 
 
 	// ########################################################################
-	// Annotations functions
+	// Editor functions
 	// ########################################################################
 
 	/**
@@ -305,4 +309,34 @@ export class FeatureWaveformViewer extends BaseFeature {
 		window.activeTextEditor?.setDecorations(this._text_decoration_signal_value, []);
 	}
    
+	/**
+	 * Adds signals under the cursors to the currently opened wave if any.
+	 */
+	public async add_signal()
+	{
+		let editor = window.activeTextEditor;
+		if (this._curr_location && this._curr_location_symbols && editor)
+		{
+
+			let symbol_path = editor.selections
+				.map((sel) => editor.document.getWordRangeAtPosition(sel.start))
+				.filter((range) => range !== undefined)
+				.map((sel) => editor.document.getText(editor.document.getWordRangeAtPosition(sel.start)))
+				.map((name) => `${this._curr_location}.${name}`)
+				.filter((path) => this._curr_location_symbols?.includes(path));
+			
+			this._viewer?.addSignalToWave(symbol_path);
+		}
+	}
+
+	/**
+	 * Select the new design location.
+	 * @param new_loc new design location from the design hierarchy provider
+	 */
+	public async set_design_location(new_loc: DesignElement)
+	{
+		this.logger?.info(`Move to design location ${new_loc.name}`);
+		this._curr_location = new_loc;
+		await this.update_annotations();
+	}
 }

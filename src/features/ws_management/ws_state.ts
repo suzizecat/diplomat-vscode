@@ -52,13 +52,13 @@ export class WorkspaceState {
 		
 	// Events
 	// ----------------------------------------------------------------------------
-	protected _evt : _WSStateEvents;
+	protected _evt  = new _WSStateEvents();
 	
-	public get on_config_loaded() {return this._evt.config_loaded.event;}
-	public get on_prj_registered() {return this._evt.prj_registered.event;}
-	public get on_prj_removed() {return this._evt.prj_removed.event;}
-	public get on_prj_updated() {return this._evt.prj_updated.event;}
-	public get on_prj_activated() {return this._evt.prj_activated.event;}
+	readonly on_config_loaded =  this._evt.config_loaded.event;
+	readonly on_prj_registered =  this._evt.prj_registered.event;
+	readonly on_prj_removed =  this._evt.prj_removed.event;
+	readonly on_prj_updated =  this._evt.prj_updated.event;
+	readonly on_prj_activated =  this._evt.prj_activated.event;
 
 	
     protected _config_file_path ?: Uri;
@@ -75,8 +75,6 @@ export class WorkspaceState {
                     projects : [],
                     excludedDiags : []
                 }
-
-		this._evt = new _WSStateEvents();
 
         this._setup_config_file();
     }
@@ -116,8 +114,10 @@ export class WorkspaceState {
 		this._env.logger?.info(`Selected workspace file ${this._config_file_path.fsPath}`);
 
 		// Initialize the file
-		if(! await utils.does_path_exist(this._config_file_path))
-			workspace.fs.writeFile(this._config_file_path,new TextEncoder().encode(JSON.stringify(this._config,undefined,4)));
+		if (! await utils.does_path_exist(this._config_file_path)) {
+			this._env.logger?.warn("Workspace configuration file not found, creating a fresh one.");
+			workspace.fs.writeFile(this._config_file_path, new TextEncoder().encode(JSON.stringify(this._config, undefined, 4)));
+		}
 	}
 
 

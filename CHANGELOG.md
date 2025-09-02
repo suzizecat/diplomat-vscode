@@ -4,6 +4,10 @@
 
  - Add support for projects within workspace
 
+## Changed
+
+ - Rework overall architecture
+
 ## Added 
 
  - Add verilog as supported languages (with SV syntax highlight)

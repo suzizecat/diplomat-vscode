@@ -16,7 +16,9 @@ export class DesignElement extends vscode.TreeItem {
 		super(label, collapsibleState);
 
 		this.parent = parent;
-	  };
+	};
+	
+	public get name(): string {	return this.label; }
 
 	/**
 	 * Getting the parent is straightforward
@@ -155,7 +157,7 @@ export class DesignHierarchyTreeProvider implements vscode.TreeDataProvider<Desi
 			//console.log(`Request open ${rec.file}`);
 			ret.fileUri = fileUri
 			//ret.command = { command: "vscode.open", title: "open", arguments: [fileUri] };
-			ret.command = { command: "diplomat-host.select-hierarchy", title: "Select hierarchy", arguments: [ret.hierPath] };
+			ret.command = { command: "diplomat-host.select-hierarchy", title: "Select hierarchy", arguments: [ret] };
 		}
 		if(rec.childs) {
 			for(let subrec of rec.childs) {

@@ -26,6 +26,7 @@ import { FileSymbolsLookupResult, WaveformViewerCbArgs } from "../exchange_types
 import { DesignElement } from "../gui/designExplorerPanel";
 import { BaseViewer } from "./waveform/base_viewer";
 import { TextAnnotator } from "../text_annotator";
+import { DiplomatSrvCmds } from "../language_server_cmds";
 
 
 export class FeatureWaveformViewer extends BaseFeature {
@@ -238,11 +239,11 @@ export class FeatureWaveformViewer extends BaseFeature {
 		this.logger?.debug("Viewer requested selection bind");
 
 		let opened : string[] =  [];
-		const result = await commands.executeCommand<{ [key: string]: lsp.Location | null }>("diplomat-server.resolve-paths", ...args);
+		const result = await DiplomatSrvCmds.resolve_hier_path(args);
 		for (let key in result) 
 		{
 			const value : lsp.Location | null = result[key];
-			if (value !== null && ! opened.includes(value.uri)) 
+			if (value && ! opened.includes(value.uri)) 
 			{
 				opened.push(value.uri);
 				this.logger?.trace(`Open file ${value.uri}`);
@@ -277,7 +278,7 @@ export class FeatureWaveformViewer extends BaseFeature {
 		}
 
 		let design_path = this._curr_location.hierPath;
-		let scope_symbols = await commands.executeCommand<FileSymbolsLookupResult>("diplomat-server.list-symbols", design_path);
+		let scope_symbols = await DiplomatSrvCmds.list_symbols(design_path);
 		this._curr_location_symbols = Object.keys(scope_symbols);
 
 		let signal_values = await this._viewer.getSignals(this._curr_location_symbols.map((s) => { return `${design_path}.${s}` }));

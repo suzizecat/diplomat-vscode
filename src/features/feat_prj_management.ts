@@ -25,6 +25,7 @@ import * as utils from "../utils";
 import { WorkspaceState } from './ws_management/ws_state';
 import { HDLProject } from './ws_management/project';
 import { BaseProjectElement, ProjectFile } from './ws_management/base_prj_element';
+import { DiplomatSrvCmds } from '../language_server_cmds';
 
 
 
@@ -192,20 +193,16 @@ export class FeatureProjectManagement extends BaseFeature {
 			else
 				target = selection[0];
 		}
-		let bblist = await vscode.commands.executeCommand<ModuleBlackBox[]>("diplomat-server.get-file-bbox", target.toString());
-		
-		if (bblist.length == 0)
+		let bblist = await DiplomatSrvCmds.get_file_bbox(target);
+		let bb = bblist.at(0);
+		if (! bb)
 			return Promise.reject();
-
-		let bb = bblist[0];
 
 		this.logger?.info(`Building project from file ${bb.module}`);
 
 		let prj = new HDLProject(bb.module); // await diplomatWorkspace.addProject(bb.module,true);
 		let hdl_module: HDLModule = { file: target.toString(), moduleName: bb.module }
-		let uri_list_raw = await vscode.commands.executeCommand<string[]>("diplomat-server.prj.tree-from-module",hdl_module);
-		let uri_list = uri_list_raw.map((elt) => vscode.Uri.parse(elt));
-		
+		let uri_list = await DiplomatSrvCmds.get_project_tree_from_module(hdl_module);
 		
 		for (let elt of uri_list) {
 			console.log(`    Adds file ${elt} to the project`);
@@ -277,7 +274,7 @@ export class FeatureProjectManagement extends BaseFeature {
 		{
 			if(active.length > 1)
 				this.logger?.warn(`Sending multiple active projet is not yet supported. Sent project will be ${active[0].name}.`)
-			vscode.commands.executeCommand("diplomat-server.prj.set-project",active[0]);
+			DiplomatSrvCmds.set_project(active[0]);
 		}
 	}
 
@@ -298,7 +295,7 @@ export class FeatureProjectManagement extends BaseFeature {
 		else
 			tgt_uri = file;
 
-		let bbs : Array<ModuleBlackBox> = await vscode.commands.executeCommand<ModuleBlackBox[]>("diplomat-server.get-file-bbox",tgt_uri.toString());
+		let bbs = await DiplomatSrvCmds.get_file_bbox(tgt_uri); 
 		let newTop : string | undefined;
 		if(bbs.length == 0)
 		{
@@ -321,7 +318,7 @@ export class FeatureProjectManagement extends BaseFeature {
 				this._model.active_project.topLevel = { file: tgt_uri.toString(), moduleName : newTop};
 				this._view.set_file_as_top(tgt_uri,this._model.active_project?.name);
 			}
-			await vscode.commands.executeCommand("diplomat-server.set-top",newTop);
+			await DiplomatSrvCmds.set_top(newTop);
 			vscode.window.showInformationMessage(`New top is ${newTop}`);
 		}
 		else

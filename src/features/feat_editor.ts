@@ -19,6 +19,7 @@
 import * as vscode from "vscode";
 import { BaseFeature, ExtensionEnvironment } from "./base_feature";
 import { HDLModule, ModuleBlackBox } from "../exchange_types";
+import { DiplomatSrvCmds } from "../language_server_cmds";
 
 /**
  * This class provides all features related to the editor itself.
@@ -39,7 +40,7 @@ export class FeatureEditor extends BaseFeature {
 	 */
 	public async select_ws_module() : Promise<HDLModule>
 	{
-		let avail_modules = await vscode.commands.executeCommand<Array<HDLModule>>("diplomat-server.get-modules");
+		let avail_modules = await DiplomatSrvCmds.get_modules();
 
 		let to_pick_item : vscode.QuickPickItem[] = [];
 		for(let mod of avail_modules)
@@ -71,7 +72,10 @@ export class FeatureEditor extends BaseFeature {
 		if(! module?.file || ! module?.moduleName)
 			return Promise.reject("Invalid module retrieved");
 
-		let bb = await vscode.commands.executeCommand<ModuleBlackBox>("diplomat-server.get-module-bbox",module);
+		let bb = (await DiplomatSrvCmds.get_module_bbox(module)).at(0);
+ 		if(!bb)
+			return Promise.reject("BB Lookup failed");
+
 		this.logger?.info(`Got black-box for module ${bb.module}`);
 
 		let to_insert = `${bb.module}`;

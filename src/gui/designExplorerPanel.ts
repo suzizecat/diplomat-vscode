@@ -1,5 +1,24 @@
+ /*
+ * Diplomat for Visual Studio Code is a language server protocol client for Diplomat language server.
+ * Copyright (C) 2025  Julien FAUCHER
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import * as vscode from 'vscode';
 import { HierarchyRecord } from '../exchange_types';
+import { DiplomatSrvCmds } from '../language_server_cmds';
 
 
 export class DesignElement extends vscode.TreeItem {
@@ -120,7 +139,7 @@ export class DesignHierarchyTreeProvider implements vscode.TreeDataProvider<Desi
 
 	public async fetchData() : Promise<DesignElement[]> {
 		console.log("Run fetch data !")
-		const rawData : HierarchyRecord[] | null = await vscode.commands.executeCommand<HierarchyRecord[] | null>("diplomat-server.get-hierarchy");
+		const rawData : HierarchyRecord[] | null = await DiplomatSrvCmds.get_hierarchy();
 		console.log(rawData);
 		this.roots = []
 

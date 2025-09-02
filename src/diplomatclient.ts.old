@@ -6,6 +6,7 @@ import { ExtensionContext, workspace, commands, window, QuickPickItem, QuickPick
 import { LanguageClient, LanguageClientOptions, ServerOptions, TransportKind } from "vscode-languageclient/node";
 
 import * as extypes from "./exchange_types";
+import { DiplomatSrvCmds } from "./language_server_cmds";
 
 let client: LanguageClient;
 
@@ -101,14 +102,14 @@ type ModuleHead = {
 export async function showInstanciate() {
 	
 	//const avail_modules : JSON = JSON.parse();
-	let availModules = await commands.executeCommand<Array< ModuleDesc>>("diplomat-server.get-modules");
+	let availModules = await DiplomatSrvCmds.get_modules();
 	console.log("Server modules : " + availModules.toString());
 	
 	let items : Array<ModuleItem> = [];
 	
 	for(let mod of availModules)
 		{
-		items.push(new ModuleItem(mod.name, mod.file));
+		items.push(new ModuleItem(mod.moduleName, mod.file));
 	}
 	
 	const result = await window.showQuickPick(items, {
@@ -117,7 +118,12 @@ export async function showInstanciate() {
 	
 	if(result !== undefined)
 	{
-		let moduleHead = await commands.executeCommand<ModuleHead>("diplomat-server.get-module-bbox",{file:result.description, module:result.label});
+		let lu_result = await DiplomatSrvCmds.get_module_bbox({file:result.description,moduleName:result.label});
+		const moduleHead = lu_result.at(0);
+		if(! moduleHead)
+			return Promise.reject("BB Lookup failed");
+
+		
 		window.showInformationMessage(`Got informations for module ${moduleHead.module}`);
 		let toInsert = `${moduleHead.module} `;
 		if( moduleHead.parameters.length > 0)

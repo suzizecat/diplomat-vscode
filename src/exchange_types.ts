@@ -64,6 +64,12 @@ export type HDLModule = {
   moduleName ?: string
 }
 
+// Needed to have some actually valid module, some time...
+export type QualifiedHDLModule = {
+  file : string | lsp.URI,
+  moduleName : string
+}
+
 export type DiplomatProject = {
   /** Name of the top-level entity if any */
   topLevel ?: HDLModule | null;

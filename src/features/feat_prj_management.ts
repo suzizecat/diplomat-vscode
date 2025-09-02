@@ -21,15 +21,15 @@ import * as dconst from "../constants" ;
 import { BaseFeature, ExtensionEnvironment } from "./base_feature";
 import { DiplomatWorkspace } from "./ws_management/diplomat_workspace";
 import { ProjectFileTreeProvider } from "./ws_management/project_files_view";
-import { DiplomatConfigNew, HDLModule, ModuleBlackBox } from "../exchange_types";
+import { DiplomatConfigNew, DiplomatProject, HDLModule, ModuleBlackBox } from "../exchange_types";
 import * as utils from "../utils";
 import { WorkspaceState } from './ws_management/ws_state';
 import { HDLProject } from './ws_management/project';
-import { BaseProjectElement, ProjectElementKind_t } from './ws_management/base_prj_element';
+import { BaseProjectElement, ProjectElementKind_t, ProjectFile } from './ws_management/base_prj_element';
 
 
 
-export class WorkspaceManagement extends BaseFeature {
+export class FeatureProjectManagement extends BaseFeature {
 
 	protected _model : WorkspaceState;
 	protected _view : ProjectFileTreeProvider;
@@ -56,6 +56,8 @@ export class WorkspaceManagement extends BaseFeature {
 	{
 		// Here perform the event bindings
 		this._model.on_prj_registered(this._load_projects_handler);
+		this._model.on_prj_updated((prj) => this.send_projects_to_lsp(prj.map(p => p.name)));
+		this._model.on_prj_activated((prj) => this.send_projects_to_lsp([prj.name]));
 	}
 
 	protected _bind_commands()
@@ -63,6 +65,8 @@ export class WorkspaceManagement extends BaseFeature {
 		this.bind("diplomat-host.prj.create-project", this.add_new_project);
 		this.bind("diplomat-host.prj.create-project-from-top", this.create_prj_from_top_file);
 		this.bind("diplomat-host.prj.remove-file", this._remove_element_from_prj);
+		this.bind("diplomat-host.prj.set-project", this.set_active_project);
+		this.bind("diplomat-host.set-top", this.set_top_from_file);
 		
 		this.bind("diplomat-host.show-config", this.open_config_file);
 	}
@@ -73,9 +77,9 @@ export class WorkspaceManagement extends BaseFeature {
 		this._view.refresh();
 	}
 
-	public start()
+	public async start()
 	{
-		this._model.load();
+		await this._model.load();
 	}
 
 	// #############################################################################
@@ -154,6 +158,15 @@ export class WorkspaceManagement extends BaseFeature {
 		return Promise.resolve(new_prj);		
 	}
 
+	/**
+	 * This function will request the language server to attempts to build the full project
+	 * through black-boxes dependencies.
+	 * 
+	 * Once done, the HDL project object is created and integrated in the workspace.
+	 * 
+	 * @param target Top file to use
+	 * @returns the created project
+	 */
 	public async create_prj_from_top_file(target?: vscode.Uri): Promise<HDLProject>
 	{
 		if(! target)
@@ -207,6 +220,117 @@ export class WorkspaceManagement extends BaseFeature {
 	}
 
 
+	/**
+	 * Sets the provided project as an active project
+	 * @param prj Project to activate
+	 */
+	public set_active_project(prj : HDLProject | string | BaseProjectElement | null | undefined) 
+	{
+		if(prj instanceof HDLProject)
+		{
+			this.set_active_project(prj.name);
+		}
+		else if(prj instanceof BaseProjectElement)
+		{
+			this.set_active_project(this._view.getProjectFromElement(prj)?.logicalName); 
+		}
+		else if(prj)
+		{
+			// Prj is a string
+			this._view.setActiveProject(prj);
+			// this.setActiveProject(this._view.getProjectFromName(prj)); 
+		}
+		else
+		{
+			// If nothing specified, remove active project...
+			// May be useful at some point
+			this._view.setActiveProject();
+		}
+	}
+
+
+	// #############################################################################
+	// LSP Communication
+	// #############################################################################
+	
+	public send_projects_to_lsp(projects ?: string[]  )
+	{
+		let to_send : DiplomatProject[] = [];
+		if(! projects)
+			to_send = structuredClone(this._model.config.projects);
+		else
+ 			to_send = structuredClone(this._model.resolve_project_names(projects));
+
+
+		for(let prj of to_send)
+		{
+			prj.sourceList = prj.sourceList.map((path) => utils.get_prj_filepath_from_uri(vscode.Uri.parse(path)));
+			if(! prj.topLevel)
+				prj.topLevel = undefined;
+		}
+
+		// As of today, only send ONE active project (for the server to handle).
+		// If/when upgrading, just send active (or even the whole to_send, to disable other projects).
+		let active : DiplomatProject[] = to_send.filter(prj => prj.active);
+
+		if(active.length > 0)
+		{
+			if(active.length > 1)
+				this.logger?.warn(`Sending multiple active projet is not yet supported. Sent project will be ${active[0].name}.`)
+			vscode.commands.executeCommand("diplomat-server.prj.set-project",active[0]);
+		}
+	}
+
+	/**
+	 * Set the top level module from a file.
+	 * If no file is passed as an argument, request a file from the user.
+	 * If the file contains several modules, request a selection from the user.
+	 * 
+	 * @param file File to handle
+	 * @returns The name of the new top module
+	 */
+	public async set_top_from_file(file : vscode.Uri | ProjectFile)
+	{
+		let tgt_uri : vscode.Uri;
+
+		if(file instanceof ProjectFile)
+			tgt_uri = file.resourceUri;
+		else
+			tgt_uri = file;
+
+		let bbs : Array<ModuleBlackBox> = await vscode.commands.executeCommand<ModuleBlackBox[]>("diplomat-server.get-file-bbox",tgt_uri.toString());
+		let newTop : string | undefined;
+		if(bbs.length == 0)
+		{
+			vscode.window.showWarningMessage(`No module found in ${tgt_uri.fsPath}`);
+			return Promise.reject()
+		}
+		else if(bbs.length > 1)
+		{
+			newTop = await vscode.window.showQuickPick(bbs.map((elt) => {return elt.module}));
+		}
+		else
+		{
+			newTop = bbs.at(0)?.module;
+		}
+		
+		if(newTop)
+		{
+			if(this._model.active_project)
+			{
+				this._model.active_project.topLevel = { file: tgt_uri.toString(), moduleName : newTop};
+				this._view.set_file_as_top(tgt_uri,this._model.active_project?.name);
+			}
+			await vscode.commands.executeCommand("diplomat-server.set-top",newTop);
+			vscode.window.showInformationMessage(`New top is ${newTop}`);
+		}
+		else
+		{
+			vscode.window.showInformationMessage("No top-module selected (nothing has been done).");
+		}
+
+		return Promise.resolve(newTop);
+	}
 
 	// #############################################################################
 	// Miscellaneous

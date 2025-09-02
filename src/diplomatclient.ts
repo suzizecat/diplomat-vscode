@@ -116,7 +116,7 @@ export async function showInstanciate() {
 	});
 	
 	if(result !== undefined)
-		{
+	{
 		let moduleHead = await commands.executeCommand<ModuleHead>("diplomat-server.get-module-bbox",{file:result.description, module:result.label});
 		window.showInformationMessage(`Got informations for module ${moduleHead.module}`);
 		let toInsert = `${moduleHead.module} `;

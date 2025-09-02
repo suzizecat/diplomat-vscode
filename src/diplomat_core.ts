@@ -17,11 +17,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { window, commands, ExtensionContext, workspace, Uri, Range, Selection, DecorationOptions, LogOutputChannel } from 'vscode';
+import { commands} from 'vscode';
 import { ExtensionEnvironment } from './features/base_feature';
 import { FeatureDiplomatLSPClient } from './features/feat_lsp_client';
 import { ContextVar } from './utils';
 import { FeatureWaveformViewer } from './features/feat_waveform_viewer';
+import { FeatureProjectManagement } from './features/feat_prj_management';
+import { FeatureEditor } from './features/feat_editor';
 
 
 
@@ -34,12 +36,16 @@ export class DiplomatExtension {
     // Features
     protected _lsp_client : FeatureDiplomatLSPClient;
     protected _lsp_waveform : FeatureWaveformViewer;
+    protected _lsp_project : FeatureProjectManagement;
+    protected _lsp_editor : FeatureEditor;
 
 
     public constructor(protected _extension_environment : ExtensionEnvironment)
     {
         this._lsp_client = new FeatureDiplomatLSPClient(this._extension_environment);
         this._lsp_waveform = new FeatureWaveformViewer(this._extension_environment);
+        this._lsp_project = new FeatureProjectManagement(this._extension_environment);
+        this._lsp_editor = new FeatureEditor(this._extension_environment);
     }
 
     /**
@@ -48,6 +54,7 @@ export class DiplomatExtension {
     public async start() {
 
         await this._lsp_client.start();
+        await this._lsp_project.start();
         commands.executeCommand('setContext', ContextVar.DiplomatEnabled , true);
     }
 }

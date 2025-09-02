@@ -34,6 +34,9 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 
 	protected _activeProject : string | null = null;
 	
+	/** Mapping project - top file */
+	protected _top_files : Map<string, BaseProjectElement | null > = new Map();
+	
 
 	static addExternalFolder(parent : BaseProjectElement) : ProjectFolder
 	{
@@ -127,9 +130,48 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 		for(let file of prj.sourceFiles)
 		{
 			let usedUri = this.getUriFromfilePath(file);
-			await this.addFileToProject(root.id,usedUri,true);
+			let new_file = await this.addFileToProject(root.name,usedUri,true);
+
+			if(prj.topLevel?.file == usedUri.toString())
+			{
+				this.set_file_as_top(new_file,root.name);
+			}
 		}
-		
+	}
+
+	/**
+	 * Set the top-file for a given project
+	 * @param file File to set
+	 * @param project 
+	 * @returns 
+	 */
+	public set_file_as_top(file : ProjectFile | vscode.Uri | null, project : string)
+	{
+		let prj = this.roots.get(project);
+		let tgt : BaseProjectElement  | null;
+		if(! prj)
+			return;
+
+		if(! file)
+			tgt = null;
+		else if(! (file instanceof ProjectFile))
+			tgt = prj?.getChildByUri(file);	
+		else 
+			tgt = file;
+
+		let prev_file = this._top_files.get(project);
+		if(prev_file)
+			prev_file.iconPath = undefined;
+
+		if(tgt)
+		{
+			tgt.iconPath = new vscode.ThemeIcon("chip");
+			this._top_files.set(project,tgt);
+		}
+		else
+		{
+			this._top_files.set(project,null);
+		}
 	}
 
 	/**
@@ -299,9 +341,9 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 
 	}
 	
-	// public getProjectFromElement(elt : BaseProjectElement) : HDLProject | null {
-	// 	return this.getProjectFromName(elt.root.logicalName);
-	// }
+	public getProjectFromElement(elt : BaseProjectElement) : ProjectFolder | null {
+		return this.getProjectFromName(elt.root.logicalName);
+	}
 
 	public getProjectFromName(name : string) : ProjectFolder | null {
 		let ret = this.roots.get(name);

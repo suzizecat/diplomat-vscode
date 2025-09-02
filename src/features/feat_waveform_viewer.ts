@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { commands, EventEmitter, Uri, window, workspace, Range, Selection, DecorationOptions } from "vscode";
+import { commands, Uri, window, workspace, Range, DecorationOptions } from "vscode";
 import * as lsp from "vscode-languageclient";
 
 import { BaseFeature, ExtensionEnvironment } from "./base_feature";

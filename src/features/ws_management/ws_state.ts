@@ -18,7 +18,7 @@
 
 import { EventEmitter, Uri, workspace , Event} from "vscode";
 import * as dconst from "../../constants" ;
-import { DiplomatConfigNew } from "../../exchange_types";
+import { DiplomatConfigNew, DiplomatProject } from "../../exchange_types";
 import { ExtensionEnvironment } from "../base_feature";
 import * as utils from "../../utils";
 import { HDLProject } from "./project";
@@ -46,6 +46,9 @@ export class WorkspaceState {
 	public get config() {return this._config;}
 
 	protected _registered_projects : Map<string, HDLProject> = new Map();
+
+	protected _active_project ?: HDLProject;
+	public get active_project() {return this._active_project;}
 		
 	// Events
 	// ----------------------------------------------------------------------------
@@ -55,6 +58,7 @@ export class WorkspaceState {
 	public get on_prj_registered() {return this._evt.prj_registered.event;}
 	public get on_prj_removed() {return this._evt.prj_removed.event;}
 	public get on_prj_updated() {return this._evt.prj_updated.event;}
+	public get on_prj_activated() {return this._evt.prj_activated.event;}
 
 	
     protected _config_file_path ?: Uri;
@@ -300,12 +304,38 @@ export class WorkspaceState {
 		this._evt.prj_updated.fire([tgt_prj]);
 	}
 
+	/**
+	 * This function update the 'active' atribute of the workspace projects
+	 * @param project The project name to enable. if omitted, disable all projects.
+	 */
 	public set_active_project(project ?: string)
 	{
-		if (!project)
+		let found_prj : HDLProject | undefined = undefined;
+		for(let prj of this.config.projects)
 		{
-			
+			if(prj.name === project)
+			{
+				prj.active = true;
+				found_prj = this._registered_projects.get(prj.name);
+			}
+			else
+			{
+				prj.active = false;
+			}
 		}
+
+		if(found_prj)
+			this._evt.prj_activated.fire(found_prj);
+	}
+
+	/**
+	 * Resolve project names
+	 * @param names Names of projects to lookup
+	 * @returns The resolved projects
+	 */
+	public resolve_project_names(names : string[]) : DiplomatProject[]
+	{
+		return this._config.projects.filter(prj => names.includes(prj.name));
 	}
 
  }

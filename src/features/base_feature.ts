@@ -22,6 +22,7 @@ export class BaseFeature {
 
     protected bind(command: string, callback: (...args: any[]) => any, thisArg?: any)
     {
-       this.context.subscriptions.push(commands.registerCommand(command,callback,thisArg)); 
+        this.logger?.info(`Feature ${this._name} register command ${command}`);
+        this.context.subscriptions.push(commands.registerCommand(command,callback,thisArg)); 
     }
 }

@@ -58,6 +58,7 @@ export class FeatureProjectManagement extends BaseFeature {
 		this._model.on_prj_registered(this._load_projects_handler, this);
 		this._model.on_prj_updated((prj) => this.send_projects_to_lsp(prj.map(p => p.name)),this);
 		this._model.on_prj_activated((prj) => this.send_projects_to_lsp([prj.name]),this);
+		this._model.on_config_loaded((_) => this.send_active_projects_to_lsp(),this);
 	}
 
 	protected _bind_commands()
@@ -71,7 +72,7 @@ export class FeatureProjectManagement extends BaseFeature {
 		this.bind("diplomat-host.save-config", this.save_config, this);
 		this.bind("diplomat-host.show-config", this.open_config_file, this);
 
-		this.bind("diplomat-host.prj.refresh-prj",this._model.send_current_project,this._model);
+		this.bind("diplomat-host.prj.refresh-prj",this.send_active_projects_to_lsp,this);
 
 		this.bind("diplomat-host.prj.ignore", this._h_ignore_path,this);
 	}
@@ -257,6 +258,16 @@ export class FeatureProjectManagement extends BaseFeature {
 	// LSP Communication
 	// #############################################################################
 	
+	public send_active_projects_to_lsp()
+	{
+		let to_send : string[] = this._model.config.projects
+		                             .filter((prj) => prj.active)
+									 .map((prj) => prj.name);
+		if(to_send.length > 0)
+			this.set_active_project(to_send.at(-1))					 
+		// this.send_projects_to_lsp(to_send);
+	}
+
 	public send_projects_to_lsp(projects ?: string[]  )
 	{
 		let to_send : DiplomatProject[] = [];
@@ -268,7 +279,16 @@ export class FeatureProjectManagement extends BaseFeature {
 
 		for(let prj of to_send)
 		{
-			prj.sourceList = prj.sourceList.map((path) => utils.get_prj_filepath_from_uri(vscode.Uri.parse(path)));
+
+			prj.sourceList = prj.sourceList.map(
+				(path) => {
+					try {
+						return vscode.Uri.parse(path,true).toString();
+					} catch (error) {
+						return utils.get_uri_from_path(path).toString();
+					}
+				}
+				);
 			if(! prj.topLevel)
 				prj.topLevel = undefined;
 		}
@@ -322,7 +342,7 @@ export class FeatureProjectManagement extends BaseFeature {
 		{
 			if(this._model.active_project)
 			{
-				this._model.active_project.topLevel = { file: tgt_uri.toString(), moduleName : newTop};
+				this._model.active_project.topLevel = { file: utils.get_prj_filepath_from_uri(tgt_uri), moduleName : newTop};
 				this._view.set_file_as_top(tgt_uri,this._model.active_project?.name);
 			}
 			await DiplomatSrvCmds.set_top(newTop);

@@ -372,11 +372,4 @@ export class WorkspaceState {
 		await DiplomatSrvCmds.ignore_paths(p);
 	}
 	
-	public async send_current_project()
-	{
-		if(this._active_project)
-		{
-			await DiplomatSrvCmds.set_project(this._active_project as HDLProject);
-		}
-	}
  }

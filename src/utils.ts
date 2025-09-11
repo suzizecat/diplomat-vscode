@@ -120,7 +120,7 @@ export function get_prj_filepath_from_uri(fpath: vscode.Uri, ref_loc?: vscode.Ur
  * Resolves the provided path considering CWD as the workspace location.
  * @param path Path to process
  */
-export function get_uri_from_path(tgt : string) : vscode.Uri | undefined
+export function get_uri_from_path(tgt : string) : vscode.Uri
 {
     if(path.isAbsolute(tgt))
     {
@@ -135,7 +135,6 @@ export function get_uri_from_path(tgt : string) : vscode.Uri | undefined
             return vscode.Uri.file(new_path);
         }
 
-        return undefined;
-
+        throw Error("Workspace shall be setup");
     }
 }

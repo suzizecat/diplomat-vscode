@@ -7,5 +7,25 @@
         "out": true // set this to false to include "out" folder in search results
     },
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
-    "typescript.tsc.autoDetect": "off"
+    "typescript.tsc.autoDetect": "off",
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#e7a1a7",
+        "activityBar.background": "#e7a1a7",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#297f20",
+        "activityBarBadge.foreground": "#e7e7e7",
+        "commandCenter.border": "#15202b99",
+        "sash.hoverBorder": "#e7a1a7",
+        "statusBar.background": "#dc7981",
+        "statusBar.foreground": "#15202b",
+        "statusBarItem.hoverBackground": "#d1515b",
+        "statusBarItem.remoteBackground": "#dc7981",
+        "statusBarItem.remoteForeground": "#15202b",
+        "titleBar.activeBackground": "#dc7981",
+        "titleBar.activeForeground": "#15202b",
+        "titleBar.inactiveBackground": "#dc798199",
+        "titleBar.inactiveForeground": "#15202b99"
+    },
+    "peacock.color": "#dc7981"
 }

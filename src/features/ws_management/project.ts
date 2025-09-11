@@ -1,3 +1,4 @@
+import { Utils } from "vscode-uri";
 import { DiplomatProject, HDLModule } from "../../exchange_types";
 import {BaseProjectTests} from "./project_test";
 
@@ -46,6 +47,14 @@ export class HDLProject implements DiplomatProject{
         let ret : HDLProject = new HDLProject();
         Object.assign(ret,prj);
         
+        // ret.sourceList.map((f) => {get})
+
+        // for(let file of ret.sourceList)
+        // {
+
+        // }
+
+
         return ret;
     }
 

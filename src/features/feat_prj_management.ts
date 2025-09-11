@@ -70,6 +70,10 @@ export class FeatureProjectManagement extends BaseFeature {
 		
 		this.bind("diplomat-host.save-config", this.save_config, this);
 		this.bind("diplomat-host.show-config", this.open_config_file, this);
+
+		this.bind("diplomat-host.prj.refresh-prj",this._model.send_current_project,this._model);
+
+		this.bind("diplomat-host.prj.ignore", this._h_ignore_path,this);
 	}
 
 	protected _build_gui()
@@ -174,7 +178,8 @@ export class FeatureProjectManagement extends BaseFeature {
 		{
 			let valid_extensions = vscode.workspace.getConfiguration("diplomatServer.index").get<string[]>("validExtensions");
 			if(! valid_extensions)
-				valid_extensions = [".sv", ".v"]
+				valid_extensions = ["sv", "v"]
+			valid_extensions = valid_extensions.map((elt) => {return elt.charAt(0) == "." ? elt.slice(1): elt;} );
 			let selection = await vscode.window.showOpenDialog({
 				canSelectFiles : true, 
 				canSelectFolders : false, 
@@ -235,13 +240,15 @@ export class FeatureProjectManagement extends BaseFeature {
 		{
 			// Prj is a string
 			this._view.setActiveProject(prj);
-			// this.setActiveProject(this._view.getProjectFromName(prj)); 
+			this._model.set_active_project(prj);
+
 		}
 		else
 		{
 			// If nothing specified, remove active project...
 			// May be useful at some point
 			this._view.setActiveProject();
+			this._model.set_active_project();
 		}
 	}
 
@@ -353,5 +360,15 @@ export class FeatureProjectManagement extends BaseFeature {
 		await this._model.save();
 	}
 	
+	/**
+	 * Handler for the ignore command (to ignore paths for the LSP)
+	 * @param _ Main selection, not used here
+	 * @param paths The full list of selected paths
+	 */
+	public async _h_ignore_path(_ : any, paths: vscode.Uri[])
+	{
+
+		this._model.ignore_paths(paths)
+	}
 
 }

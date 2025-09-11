@@ -22,13 +22,14 @@ import { DiplomatConfigNew, DiplomatProject } from "../../exchange_types";
 import { ExtensionEnvironment } from "../base_feature";
 import * as utils from "../../utils";
 import { HDLProject } from "./project";
+import { DiplomatSrvCmds } from "../../language_server_cmds";
 
 
 /**
  * Lightweight container to keep stuff somewhat tidy in {@link WorkspaceState}
  */
 class _WSStateEvents {
-	public config_loaded = new EventEmitter<Uri>();
+	public config_loaded = new EventEmitter<DiplomatConfigNew>();
 	public prj_registered = new EventEmitter<HDLProject[]>();
 	public prj_removed = new EventEmitter<HDLProject[]>();
 	public prj_updated = new EventEmitter<HDLProject[]>();
@@ -79,7 +80,19 @@ export class WorkspaceState {
         this._setup_config_file();
     }
 
+	protected async _setup_storage_space()
+	{
+		if(this._env.context.storageUri === undefined)
+		{
+			this._env.logger?.error("A workspace shall have been opened");
+			throw new Error("Trying to work with workspace features without an active workspace.");
+		}
 
+		if( ! await utils.does_path_exist(this._env.context.storageUri))
+		{
+			await workspace.fs.createDirectory(this._env.context.storageUri);
+		}
+	}
 
 	/**
 	 * This function ensure that the config file is in a sane state.
@@ -88,28 +101,24 @@ export class WorkspaceState {
     protected async _setup_config_file()
 	{
 
+		await this._setup_storage_space();
+
+		if(!this._env.context.storageUri)
+			throw new Error("Trying to work with workspace features without an active workspace.");
+
 		let param_filepath = workspace.getConfiguration("diplomatServer.projects").get<string>("projectFilePath");
-		if(! param_filepath || param_filepath.length == 0)
+		
+		if(param_filepath && param_filepath.length > 0)
+		{
+			this._config_file_path = utils.get_uri_from_path(param_filepath);
+		}
+
+		if(! this._config_file_path)
 		{
 			this._env.logger?.info("Setting up default config file path");
-
-			if(this._env.context.storageUri === undefined)
-			{
-				this._env.logger?.error("A workspace shall have been opened");
-				throw new Error("Trying to work with workspace features without an active workspace.");
-			}
-
-			if( ! await utils.does_path_exist(this._env.context.storageUri))
-			{
-				await workspace.fs.createDirectory(this._env.context.storageUri);
-			}
-
 			this._config_file_path = Uri.joinPath(this._env.context.storageUri,dconst.DEFAULT_WS_CONF_FILE_NAME);
 		}
-		else
-		{
-			this._config_file_path = Uri.file(param_filepath);
-		}
+		
 
 		this._env.logger?.info(`Selected workspace file ${this._config_file_path.fsPath}`);
 
@@ -164,8 +173,12 @@ export class WorkspaceState {
 					this._config = JSON.parse(new TextDecoder().decode(data));
 				}
 			);
-			 this._refresh_projects_from_config();
-			this._evt.config_loaded.fire(path);
+			
+			let paths_to_ignore = this._config.excludedPaths.map(utils.get_uri_from_path).filter((p) => {return p !== undefined;})
+
+			await this.ignore_paths(paths_to_ignore);
+			this._refresh_projects_from_config();
+			this._evt.config_loaded.fire(this._config);
             return Promise.resolve();
         } 
 		catch (error) 
@@ -310,11 +323,13 @@ export class WorkspaceState {
 	 */
 	public set_active_project(project ?: string)
 	{
+		
 		let found_prj : HDLProject | undefined = undefined;
 		for(let prj of this.config.projects)
 		{
 			if(prj.name === project)
 			{
+				this._active_project = this._registered_projects.get(prj.name);
 				prj.active = true;
 				found_prj = this._registered_projects.get(prj.name);
 			}
@@ -338,4 +353,30 @@ export class WorkspaceState {
 		return this._config.projects.filter(prj => names.includes(prj.name));
 	}
 
+	/**
+	 * Update the list of paths to be ignored.
+	 * @param p New paths to ignore
+	 */
+	public async ignore_paths(p : Uri[])
+	{
+		if(p.length == 0)
+			return; 
+
+		for(let path of p.map(u => utils.get_prj_filepath_from_uri(u)))
+		{
+			this._env.logger?.info(`Requesting ignore for ${path}`);
+			if(! this.config.excludedPaths.includes(path))
+				this.config.excludedPaths.push(path);
+		}
+
+		await DiplomatSrvCmds.ignore_paths(p);
+	}
+	
+	public async send_current_project()
+	{
+		if(this._active_project)
+		{
+			await DiplomatSrvCmds.set_project(this._active_project as HDLProject);
+		}
+	}
  }

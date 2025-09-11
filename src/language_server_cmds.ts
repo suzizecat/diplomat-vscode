@@ -119,4 +119,9 @@ export namespace DiplomatSrvCmds {
     {
         return vscode.commands.executeCommand<HierarchyRecord[] | null>("diplomat-server.get-hierarchy");
     }
+
+    export async function ignore_paths(tgt : vscode.Uri[]) : Promise<void>
+    {
+        return vscode.commands.executeCommand("diplomat-server.ignore", tgt.map(p => p.toString()));
+    }
  }

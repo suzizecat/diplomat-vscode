@@ -51,7 +51,7 @@
     "viewsWelcome": [
       {
         "view": "diplomat-prj",
-        "contents": "No project seems to be setup in the current workspace. You may automatically build a project using an already existing top file or create an empty project.\n[Create Project from File](command:diplomat-host.prj.create-project-from-top)\n[Create Empty Project](command:diplomat-host.prj.create-project)"
+        "contents": "No project seems to be setup in the current workspace. You may automatically build a project using an already existing top file or create an empty project.\n[Create Empty Project](command:diplomat-host.prj.create-project)\n[Create Project from File](command:diplomat-host.prj.create-project-from-top)"
       }
     ],
     "menus": {
@@ -97,11 +97,16 @@
           "command": "diplomat-host.set-top",
           "group": "1_diplomat",
           "when": "view == diplomat-prj && viewItem == file"
+        },
+        {
+          "command": "diplomat-host.prj.refresh-prj",
+          "group": "1_diplomat",
+          "when": "view == diplomat-prj && viewItem == project"
         }
       ],
       "explorer/context": [
         {
-          "command": "diplomat-server.ignore",
+          "command": "diplomat-host.prj.ignore",
           "group": "2_workspace"
         },
         {
@@ -133,7 +138,7 @@
           "when": "never"
         },
         {
-          "command": "diplomat-server.ignore",
+          "command": "diplomat-host.prj.ignore",
           "when": "never"
         },
         {
@@ -168,12 +173,22 @@
         "title": "Hello World"
       },
       {
+        "command": "diplomat-host.prj.refresh-prj",
+        "category": "Diplomat",
+        "title": "Re-process project"
+      },
+      {
         "command": "diplomat-host.refresh-hierarchy",
-        "title": "Diplomat: Refresh the design hierarchy",
+        "category": "Diplomat",
+        "title": "Refresh the design hierarchy",
         "icon": "$(refresh)"
       },
       {
         "command": "diplomat-server.ignore",
+        "title": "Ignore path for Diplomat LSP"
+      },
+      {
+        "command": "diplomat-host.prj.ignore",
         "title": "Ignore path for Diplomat LSP"
       },
       {
@@ -278,7 +293,8 @@
       },
       {
         "command": "diplomat-host.prj.set-project",
-        "title": "Diplomat: Set project as active"
+        "title": "Set project as active",
+        "category": "Diplomat"
       }
     ],
     "languages": [

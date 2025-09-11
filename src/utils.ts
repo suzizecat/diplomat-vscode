@@ -102,6 +102,7 @@ export function get_workspace_base_uri() : vscode.Uri | undefined
 
 export function get_prj_filepath_from_uri(fpath: vscode.Uri, ref_loc?: vscode.Uri) : string
 {
+    
     if (!ref_loc)
         ref_loc = get_workspace_base_uri();
 
@@ -113,4 +114,28 @@ export function get_prj_filepath_from_uri(fpath: vscode.Uri, ref_loc?: vscode.Ur
         return fpath.fsPath;
     else
         return tgt_path;
+}
+
+/**
+ * Resolves the provided path considering CWD as the workspace location.
+ * @param path Path to process
+ */
+export function get_uri_from_path(tgt : string) : vscode.Uri | undefined
+{
+    if(path.isAbsolute(tgt))
+    {
+        return vscode.Uri.file(tgt);
+    }
+    else
+    {
+        let ws_basepath = get_workspace_base_uri()?.path;
+        if(ws_basepath)
+        {
+            let new_path = path.resolve(ws_basepath,tgt);
+            return vscode.Uri.file(new_path);
+        }
+
+        return undefined;
+
+    }
 }

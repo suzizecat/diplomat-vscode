@@ -20,7 +20,7 @@
 import { commands} from 'vscode';
 import { ExtensionEnvironment } from './features/base_feature';
 import { FeatureDiplomatLSPClient } from './features/feat_lsp_client';
-import { ContextVar } from './utils';
+import { ContextVar, get_workspace_base_uri } from './utils';
 import { FeatureWaveformViewer } from './features/feat_waveform_viewer';
 import { FeatureProjectManagement } from './features/feat_prj_management';
 import { FeatureEditor } from './features/feat_editor';
@@ -73,6 +73,7 @@ export class DiplomatExtension {
         await this._feat_lsp.start();
         await this._feat_project.start();
         commands.executeCommand('setContext', ContextVar.DiplomatEnabled, true);
+        this.logger?.info(`Diplomat started in workspace ${get_workspace_base_uri()?.fsPath}`);
     }
 
     public stop()

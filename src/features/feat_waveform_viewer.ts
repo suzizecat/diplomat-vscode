@@ -336,8 +336,9 @@ export class FeatureWaveformViewer extends BaseFeature {
 	 */
 	public async set_design_location(new_loc: DesignElement)
 	{
-		this.logger?.info(`Move to design location ${new_loc.name}`);
+		this.logger?.info(`Move to design location ${new_loc.name} (at URI ${new_loc.fileUri})`);
 		this._curr_location = new_loc;
+		await commands.executeCommand("vscode.open", this._curr_location.fileUri);
 		await this.update_annotations();
 	}
 }

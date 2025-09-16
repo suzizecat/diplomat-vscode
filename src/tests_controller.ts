@@ -22,7 +22,6 @@ import { ExtensionContext, FileType, Position, Progress, ProgressLocation, Range
 import { TestDiscoveryResults } from "./exchange_types";
 import { spawn, ChildProcess, exec, spawnSync} from 'node:child_process';
 import path = require("node:path");
-import { assertEquals } from "typia";
 import { CancellationToken } from "vscode-languageclient";
 import { XMLParser } from "fast-xml-parser";
 
@@ -178,11 +177,15 @@ export class DiplomatTestController {
 		}
 
 
-		return Promise.resolve(assertEquals<TestDiscoveryResults>(JSON.parse(
+		// return Promise.resolve(assertEquals<TestDiscoveryResults>(JSON.parse(
+		// 	await workspace.fs.readFile(outputFile).then((data) => {
+		// 		return new TextDecoder().decode(data);
+		// 	})
+		// )))
+		return Promise.resolve(JSON.parse(
 			await workspace.fs.readFile(outputFile).then((data) => {
 				return new TextDecoder().decode(data);
-			})
-		)))
+			})) as TestDiscoveryResults);
 	}
 
 	protected testsFromDiscoveryResults(discovery : TestDiscoveryResults) {

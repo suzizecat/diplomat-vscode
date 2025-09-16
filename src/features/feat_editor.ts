@@ -20,6 +20,7 @@ import * as vscode from "vscode";
 import { BaseFeature, ExtensionEnvironment } from "./base_feature";
 import { HDLModule, ModuleBlackBox } from "../exchange_types";
 import { DiplomatSrvCmds } from "../language_server_cmds";
+import { generate_bb_instance_as_string, SVFileEditorDropEditProvider } from "./editor/module_instanciation";
 
 /**
  * This class provides all features related to the editor itself.
@@ -30,7 +31,12 @@ export class FeatureEditor extends BaseFeature {
     {
         super("editor",ext_context);
 
-		this.bind("diplomat-host.instanciate",this.instanciate_module);
+		this.bind("diplomat-host.instanciate",this.instanciate_module,this);
+
+		vscode.languages.registerDocumentDropEditProvider(
+			{scheme: 'file', language: 'systemverilog'},
+			new SVFileEditorDropEditProvider()
+		);
     }
 
 
@@ -78,23 +84,7 @@ export class FeatureEditor extends BaseFeature {
 
 		this.logger?.info(`Got black-box for module ${bb.module}`);
 
-		let to_insert = `${bb.module}`;
-		if(bb.parameters.length > 0)
-		{
-			to_insert += " #(\n";
-			for(let param of bb.parameters)
-			{
-				to_insert += `\t.${param.name}(${param.default ? param.default : param.name}),\n`;
-			}
-			to_insert = to_insert.slice(0,-2) + ")\n";
-		}
-
-		to_insert += `u_${bb.module.toLowerCase()} (\n`;
-		for(let port of bb.ports)
-		{
-			to_insert += `\t.${port.name}(${port.name}), ${port.comment}\n`;
-		}
-		to_insert = to_insert.slice(0,-2) + "\n);";
+		let to_insert = generate_bb_instance_as_string(bb);
 
 		let pos = vscode.window.activeTextEditor.selection.start;
 		vscode.window.activeTextEditor.edit((builder) => builder.insert(pos,to_insert));

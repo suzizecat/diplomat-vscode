@@ -20,7 +20,6 @@ import { spawn } from 'node:child_process';
 import path = require('node:path');
 
 import { commands, workspace } from 'vscode';
-import { assertEquals } from "typia"
 
 import { BaseViewer } from "./base_viewer";
 import { SignalData } from '../../exchange_types';
@@ -140,7 +139,8 @@ export class GTKWaveViewer extends BaseViewer {
         await this.sendCommand(`set signals_to_get { ${signals.join(" ")} }`);
         let result: string = await this.exchangeCommand(`get_signals_values $signals_to_get`);
         console.log(`Got values`)
-        return assertEquals<SignalData[]>(JSON.parse(result));
+        // return assertEquals<SignalData[]>(JSON.parse(result));
+        return JSON.parse(result) as SignalData[];
     }
 
     public async refreshWaves(): Promise<void> {

@@ -37,6 +37,9 @@ export class FeatureProjectManagement extends BaseFeature {
 	/** URI to the config file related to the project */
 	protected _user_config_file_path ?: vscode.Uri;
 
+	
+
+	public get on_config_loaded() {return this._model.on_config_loaded};
 
 	constructor(ext_env: ExtensionEnvironment) {
 		super("workspace-manager", ext_env);

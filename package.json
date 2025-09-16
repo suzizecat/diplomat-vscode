@@ -446,10 +446,10 @@
   },
   "scripts": {
     "yj": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json",
-    "precompile" : "npm run yj && npm run check-types",
+    "precompile": "npm run yj && npm run check-types",
     "manual-compile": "npm run precompile && node esbuild.js",
     "compile": "node esbuild.js",
-    "check-types" : "tsc --noEmit",
+    "check-types": "tsc --noEmit",
     "vscode:prepublish": "npm run package",
     "watch": "npm-run-all -p watch:*",
     "watch:esbuild": "node esbuild.js --watch",
@@ -458,25 +458,23 @@
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
     "publish": "vsce package",
-    "package": "npm run precompile && node esbuild.js --production",
-    "prepare": "ts-patch install && typia patch"
+    "package": "npm run precompile && node esbuild.js --production"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
-    "@types/node": "^20.5.1",
-    "@types/vscode": "^1.81.0",
-    "@vscode/test-electron": "^2.3.4",
+    "@types/node": "^20.19.13",
+    "@types/vscode": "^1.104.0",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "~2.22.0",
     "esbuild": "^0.25.9",
     "js-yaml": "^4.1.0",
-    "ts-patch": "^3.2.1",
-    "typescript": "^5.5.2"
+    "ts-patch": "^3.3.0",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "fast-xml-parser": "~4.4.1",
     "semver": "~7.7",
     "ts-semaphore": "1.0.0",
-    "typia": "~6.5.4",
     "vscode-languageclient": "9.0.1",
     "vscode-uri": "^3.1.0"
   }

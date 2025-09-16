@@ -60,9 +60,11 @@ export class DiplomatExtension {
 
     protected _bind_events()
     {
-        this._feat_hier.on_elt_select(this._feat_waveform.set_design_location, this);
+        this._feat_hier.on_elt_select(this._feat_waveform.set_design_location, this._feat_waveform);
 
-        this._feat_test.on_test_finished(this._feat_waveform.refresh_waves, this);
+        this._feat_project.on_config_loaded(this._feat_hier.refresh,this._feat_hier);
+
+        this._feat_test.on_test_finished(this._feat_waveform.refresh_waves, this._feat_waveform);
     }
 
     /**

@@ -24,7 +24,6 @@ import { once } from 'node:events';
 
 import { commands, ExtensionContext, workspace } from 'vscode';
 
-import { assertEquals } from "typia"
 import Semaphore = require('ts-semaphore');
 
 import { SignalData, WaveformViewerCbArgs } from '../../exchange_types';
@@ -133,14 +132,16 @@ export abstract class BaseViewer {
     protected forwardToCallback(data: any) {
 
         let cbArgs: WaveformViewerCbArgs | undefined = undefined;
-        try {
-            cbArgs = assertEquals<WaveformViewerCbArgs>(data);
-        } catch (error) {
-            if (this.verboseLog) {
-                console.log("Failed to parse viewer output\n%s", data);
-                cbArgs = undefined;
-            }
-        }
+
+        cbArgs = data as WaveformViewerCbArgs;
+        // try {
+        //     cbArgs = assertEquals<WaveformViewerCbArgs>(data);
+        // } catch (error) {
+        //     if (this.verboseLog) {
+        //         console.log("Failed to parse viewer output\n%s", data);
+        //         cbArgs = undefined;
+        //     }
+        // }
 
         if (cbArgs !== undefined) {
 

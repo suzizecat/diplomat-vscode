@@ -68,7 +68,7 @@ export class FeatureWaveformViewer extends BaseFeature {
 	 * See the bound function for more information abour the arguments.
 	 */
 	protected _viewer_cb_bindings : { [key: string] : (args: Array<any>) => Promise<void>} = {
-		"select" : this._h_viewer_select, 
+		"select" : this._h_viewer_select.bind(this), 
 	};
 
 	/**
@@ -197,7 +197,7 @@ export class FeatureWaveformViewer extends BaseFeature {
 					this.context, 
 					this._gtkwave_path, 
 					this._gtkwave_options, 
-					this.forward_viewer_command, 
+					this.forward_viewer_command.bind(this), 
 					[".vcd", ".fst", ".gtkw", ".ghw"]
 				);
 

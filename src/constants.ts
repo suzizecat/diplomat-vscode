@@ -17,3 +17,6 @@
  */
 
  export const DEFAULT_WS_CONF_FILE_NAME = "diplomat-workspace-settings.json";
+
+ export const VIEWS_ID_PRJ = "diplomat-prj"
+ export const VIEWS_ID_DESIGN_HIER = "design-hierarchy"

@@ -41,7 +41,7 @@ export class FeatureHierarchyManagement extends BaseFeature {
     {
 		super("hier", ext_context);
 		
-		this.bind("diplomat-host.refresh-hierarchy", this._gui.refresh, this);
+		this.bind("diplomat-host.refresh-hierarchy", this._gui.refresh, this._gui);
 		this.bind("diplomat-host.select-hierarchy", this._h_on_select, this);
 
 		

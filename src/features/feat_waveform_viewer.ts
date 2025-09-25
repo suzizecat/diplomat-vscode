@@ -33,11 +33,11 @@ export class FeatureWaveformViewer extends BaseFeature {
 
 
 	protected get _gtkwave_path() 
-	{ return workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string>("path");}
+	{ return workspace.getConfiguration("diplomat.tools.GTKWave").get<string>("path");}
 	protected get _gtkwave_options() 
-	{ return workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string[]>("options");}
+	{ return workspace.getConfiguration("diplomat.tools.GTKWave").get<string[]>("options");}
 	protected get _gtkwave_verbose() 
-	{ return workspace.getConfiguration("diplomatServer.tools.GTKWave").get<boolean>("verbose");}
+	{ return workspace.getConfiguration("diplomat.tools.GTKWave").get<boolean>("verbose");}
 
 	
 	// ########################################################################
@@ -96,7 +96,7 @@ export class FeatureWaveformViewer extends BaseFeature {
 		this.bind("diplomat-host.waves.disable-follow",() => {this.set_follow_mode(false);}, this);
 		this.bind("diplomat-host.waves.refresh-annotations", this.update_annotations, this);
 		this.bind("diplomat-host.waves.clear-annotations", this.clear_annotations, this);
-		this.bind("diplomat-host.waves.add-signal", this.clear_annotations, this);
+		this.bind("diplomat-host.waves.add-signal", this.add_symbol_to_signals, this);
 	}
 
 	

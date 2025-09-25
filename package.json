@@ -1,6 +1,6 @@
 {
   "name": "diplomat-host",
-  "displayName": "diplomat-host",
+  "displayName": "Diplomat",
   "description": "",
   "publisher": "jfaucher",
   "version": "0.4.0-dev.2",
@@ -102,6 +102,11 @@
           "command": "diplomat-host.prj.refresh-prj",
           "group": "1_diplomat",
           "when": "view == diplomat-prj && viewItem == project"
+        },
+         {
+          "command": "diplomat-host.prj.refresh-prj",
+          "group": "inline",
+          "when": "view == diplomat-prj && viewItem == project"
         }
       ],
       "explorer/context": [
@@ -175,7 +180,8 @@
       {
         "command": "diplomat-host.prj.refresh-prj",
         "category": "Diplomat",
-        "title": "Re-process project"
+        "title": "Re-process project",
+        "icon" : "$(refresh)"
       },
       {
         "command": "diplomat-host.refresh-hierarchy",
@@ -348,81 +354,106 @@
         "path": "./syntaxes/systemverilog.tmLanguage.json"
       }
     ],
-    "configuration": {
-      "title": "Diplomat Server",
-      "properties": {
-        "diplomatServer.projects.projectFilePath": {
-          "scope": "resource",
-          "description": "Path for the diplomat projects configuration file. If empty (default) the storage will be located in the VSCode Extension storage space.",
-          "type": "string",
-          "default": ""
-        },
-        "diplomatServer.serverArgs": {
-          "description": "Server arguments",
-          "type": "array",
-          "items": {
-            "type": "string"
+    "configuration": [
+      {
+        "title": "Server",
+        "order": 0,
+        "properties": {
+          "diplomat.server.path": {
+            "description": "Diplomat LSP command",
+            "type": "string",
+            "default": "slang-lsp",
+            "order": 0
+          },
+            "diplomat.server.arguments": {
+            "description": "Server arguments",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "order": 1
+          },
+          "diplomat.server.useTCP": {
+            "markdownDescription": "Use TCP connection to an already started language server. Matches server `--tcp` argument.",
+            "type": "boolean",
+            "default": false,
+            "order": 2
+          },
+          "diplomat.server.TCPPort": {
+            "markdownDescription": "Port to use for TCP connexion, to match server `--port` setting.",
+            "type": "integer",
+            "default": 8080,
+            "order": 3
           }
-        },
-        "diplomatServer.index.validExtensions": {
-          "description": "Valid systemverilog extensions for indexing",
-          "type": "array",
-          "items": {
-            "type": "string"
+        }
+      },
+      {
+        "title": "Tools",
+        "order": 10,
+        "properties": {        
+          "diplomat.tools.GTKWave.path": {
+            "description": "GTKWave executable path",
+            "type": "string",
+            "default": "gtkwave"
           },
-          "default": [
-            ".v",
-            ".sv",
-            ".svh"
-          ]
-        },
-        "diplomatServer.server.useTCP": {
-          "description": "Use TCP connection to an already started LS",
-          "type": "boolean",
-          "default": false
-        },
-        "diplomatServer.serverPath": {
-          "description": "Diplomat LSP command",
-          "type": "string",
-          "default": "slang-lsp"
-        },
-        "diplomatServer.tools.GTKWave.path": {
-          "description": "GTKWave executable path",
-          "type": "string",
-          "default": "gtkwave"
-        },
-        "diplomatServer.tools.GTKWave.verbose": {
-          "description": "Dump GTKWave outputs to extension outputs ",
-          "type": "boolean",
-          "default": false
-        },
-        "diplomatServer.tools.GTKWave.options": {
-          "description": "Added options for GTKWave call",
-          "type": "array",
-          "items": {
-            "type": "string"
+          "diplomat.tools.GTKWave.verbose": {
+            "description": "Dump GTKWave outputs to extension outputs ",
+            "type": "boolean",
+            "default": false
           },
-          "default": []
-        },
-        "diplomatServer.waveformViewer.reloadOnTestEnd": {
-          "description": "Automatically reload the waveform viewer at the end of a test if the waveform viewer is opened.",
-          "type": "string",
-          "enum": [
-            "always",
-            "never",
-            "onSingle"
-          ],
-          "enumItemLabels": [
-            "Always reload",
-            "Never reload",
-            "Reload only if a single testcase has been ran"
-          ],
-          "default": [
-            "onSingle"
-          ]
+          "diplomat.tools.GTKWave.options": {
+            "description": "Added options for GTKWave call",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        }
+      },
+      {
+        "title": "Features",
+        "order": 2,
+        "properties": {
+           "diplomat.projects.projectFilePath": {
+            "scope": "resource",
+            "description": "Path for the diplomat projects configuration file. If empty (default) the storage will be located in the VSCode Extension storage space.",
+            "type": "string",
+            "default": ""
+          },
+        
+          "diplomat.index.validExtensions": {
+            "description": "Valid systemverilog extensions for indexing",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [
+              ".v",
+              ".sv",
+              ".svh"
+            ]
+          },
+          "diplomat.waveformViewer.reloadOnTestEnd": {
+            "description": "Automatically reload the waveform viewer at the end of a test if the waveform viewer is opened.",
+            "type": "string",
+            "enum": [
+              "always",
+              "never",
+              "onSingle"
+            ],
+            "enumItemLabels": [
+              "Always reload",
+              "Never reload",
+              "Reload only if a single testcase has been ran"
+            ],
+            "default": [
+              "onSingle"
+            ]
+          }
         }
       }
-    },
+    ],
     "colors": [
       {
         "id": "diplomathost.annotationForeground",
@@ -441,6 +472,38 @@
           "light": "#f4f5f4",
           "highContrast": "#1e2c31"
         }
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "diplomat-setup",
+        "title": "Diplomat Quick Start",
+        "description": "The preliminary setup steps to work with Diplomat",
+        "steps": [
+          {
+            "id": "get-server",
+            "title": "Getting Diplomat Server",
+            "description": "In order to use Diplomat, you need to get the server.\n[Go to the release page](https://github.com/suzizecat/slang-lsp-tools/releases/latest)\n[Visit the Github page](https://github.com/suzizecat/slang-lsp-tools)",
+            "media": {"markdown": "resources/walkthrough/get_diplomat.md"},
+            "completionEvents": [
+              "onLink:https://github.com/suzizecat/slang-lsp-tools",
+              "onLink:https://github.com/suzizecat/slang-lsp-tools/releases/latest"
+            ]
+          },
+          {
+            "id": "set-path",
+            "title": "Setting Diplomat paths",
+            "description": "This step will help you with the very basic settings required for Diplomat\n[Show Diplomat settings](command:workbench.action.openSettings?%22@ext:jfaucher.diplomat-host%22)",
+            "media": {"markdown": "resources/walkthrough/settings_srv.md"},
+            "completionEvents": [
+              "onSettingChanged:diplomatServer.server.useTCP",
+              "onSettingChanged:diplomatServer.serverPath",
+              "onSettingChanged:diplomatServer.serverArgs",
+              "onSettingChanged:diplomatServer.projects.projectFilePath",
+              "onCommand:workbench.action.openSettings"
+            ]
+          }
+        ]
       }
     ]
   },

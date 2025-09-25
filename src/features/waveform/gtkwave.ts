@@ -41,7 +41,7 @@ export class GTKWaveViewer extends BaseViewer {
 
         this.setUpCapabilities();
         await this.ensureClosed();
-        let arglist = workspace.getConfiguration("diplomatServer.tools.GTKWave").get<string[]>("options");
+        let arglist = workspace.getConfiguration("diplomat.tools.GTKWave").get<string[]>("options");
         
         if(! arglist)
             arglist = [];

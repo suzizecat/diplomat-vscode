@@ -9,23 +9,23 @@
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
     "typescript.tsc.autoDetect": "off",
     "workbench.colorCustomizations": {
-        "activityBar.activeBackground": "#e7a1a7",
-        "activityBar.background": "#e7a1a7",
-        "activityBar.foreground": "#15202b",
-        "activityBar.inactiveForeground": "#15202b99",
-        "activityBarBadge.background": "#297f20",
+        "activityBar.activeBackground": "#6f1e22",
+        "activityBar.background": "#6f1e22",
+        "activityBar.foreground": "#e7e7e7",
+        "activityBar.inactiveForeground": "#e7e7e799",
+        "activityBarBadge.background": "#267d22",
         "activityBarBadge.foreground": "#e7e7e7",
-        "commandCenter.border": "#15202b99",
-        "sash.hoverBorder": "#e7a1a7",
-        "statusBar.background": "#dc7981",
-        "statusBar.foreground": "#15202b",
-        "statusBarItem.hoverBackground": "#d1515b",
-        "statusBarItem.remoteBackground": "#dc7981",
-        "statusBarItem.remoteForeground": "#15202b",
-        "titleBar.activeBackground": "#dc7981",
-        "titleBar.activeForeground": "#15202b",
-        "titleBar.inactiveBackground": "#dc798199",
-        "titleBar.inactiveForeground": "#15202b99"
+        "commandCenter.border": "#e7e7e799",
+        "sash.hoverBorder": "#6f1e22",
+        "statusBar.background": "#471316",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#6f1e22",
+        "statusBarItem.remoteBackground": "#471316",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#471316",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#47131699",
+        "titleBar.inactiveForeground": "#e7e7e799"
     },
-    "peacock.color": "#dc7981"
+    "peacock.color": "#471316"
 }

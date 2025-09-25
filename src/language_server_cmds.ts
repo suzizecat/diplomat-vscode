@@ -18,6 +18,7 @@
 
 import * as vscode from "vscode";
 import * as lsp from "vscode-languageclient";
+import * as dconst from "./constants";
 import { DiplomatProject, FileSymbolsLookupResult, HDLModule, HierarchyRecord, ModuleBlackBox, QualifiedHDLModule } from "./exchange_types";
 
 /**
@@ -76,7 +77,11 @@ export namespace DiplomatSrvCmds {
      */
     export async function set_project(prj : DiplomatProject) : Promise<void>
     {
-        return vscode.commands.executeCommand("diplomat-server.prj.set-project",prj);
+        return vscode.window.withProgress(
+            {location : {viewId : dconst.VIEWS_ID_PRJ}}, 
+            async (_) => {
+                await vscode.commands.executeCommand("diplomat-server.prj.set-project",prj);
+            });
     }
     
     /**

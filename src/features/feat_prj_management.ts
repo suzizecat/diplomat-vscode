@@ -24,7 +24,7 @@ import {DiplomatProject, HDLModule, ModuleBlackBox } from "../exchange_types";
 import * as utils from "../utils";
 import { WorkspaceState } from './ws_management/ws_state';
 import { HDLProject } from './ws_management/project';
-import { BaseProjectElement, ProjectFile } from './ws_management/base_prj_element';
+import { BaseProjectElement, ProjectFile, ProjectFolder } from './ws_management/base_prj_element';
 import { DiplomatSrvCmds } from '../language_server_cmds';
 
 
@@ -75,14 +75,14 @@ export class FeatureProjectManagement extends BaseFeature {
 		this.bind("diplomat-host.save-config", this.save_config, this);
 		this.bind("diplomat-host.show-config", this.open_config_file, this);
 
-		this.bind("diplomat-host.prj.refresh-prj",this.send_active_projects_to_lsp,this);
+		this.bind("diplomat-host.prj.refresh-prj",this.reprocess_project,this);
 
 		this.bind("diplomat-host.prj.ignore", this._h_ignore_path,this);
 	}
 
 	protected _build_gui()
 	{
-		vscode.window.createTreeView("diplomat-prj", { treeDataProvider: this._view, dragAndDropController: this._view });
+		vscode.window.createTreeView(dconst.VIEWS_ID_PRJ, { treeDataProvider: this._view, dragAndDropController: this._view });
 		// this._view.refresh();
 	}
 
@@ -109,11 +109,11 @@ export class FeatureProjectManagement extends BaseFeature {
 	{
 		if(target)
 		{
-			this._view.removePrjElement(target);
 			let prj = target.root.logicalName;
-		
+			
 			let flist = [];
-
+			
+			
 			for (let elt of target.leaves)
 			{
 				if (elt.resourceUri)
@@ -123,7 +123,7 @@ export class FeatureProjectManagement extends BaseFeature {
 			}
 
 			this._model.remove_files(prj, flist);
-
+			this._view.removePrjElement(target);
 		}	
 		
 	}
@@ -180,7 +180,7 @@ export class FeatureProjectManagement extends BaseFeature {
 	{
 		if(! target)
 		{
-			let valid_extensions = vscode.workspace.getConfiguration("diplomatServer.index").get<string[]>("validExtensions");
+			let valid_extensions = vscode.workspace.getConfiguration("diplomat.index").get<string[]>("validExtensions");
 			if(! valid_extensions)
 				valid_extensions = ["sv", "v"]
 			valid_extensions = valid_extensions.map((elt) => {return elt.charAt(0) == "." ? elt.slice(1): elt;} );
@@ -219,9 +219,12 @@ export class FeatureProjectManagement extends BaseFeature {
 			prj.addFileToProject(utils.get_prj_filepath_from_uri(elt));
 		}
 
+		prj.active = true;
+		prj.topLevel = {file : utils.get_prj_filepath_from_uri(target), moduleName : bb.module};
 		this._model.register_projects(prj);
 	
 		this.logger?.info(`Project '${prj.name}' successfuly built.`);
+		this.save_config();
 		return Promise.resolve(prj);
 	}
 
@@ -271,7 +274,12 @@ export class FeatureProjectManagement extends BaseFeature {
 		// this.send_projects_to_lsp(to_send);
 	}
 
-	public send_projects_to_lsp(projects ?: string[]  )
+	public async reprocess_project(project : ProjectFolder)
+	{
+		await this.send_projects_to_lsp([project.name])
+	}
+
+	public async send_projects_to_lsp(projects ?: string[]  )
 	{
 		let to_send : DiplomatProject[] = [];
 		if(! projects)
@@ -304,7 +312,7 @@ export class FeatureProjectManagement extends BaseFeature {
 		{
 			if(active.length > 1)
 				this.logger?.warn(`Sending multiple active projet is not yet supported. Sent project will be ${active[0].name}.`)
-			DiplomatSrvCmds.set_project(active[0]);
+			await DiplomatSrvCmds.set_project(active[0]);
 		}
 	}
 

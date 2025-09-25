@@ -19,7 +19,7 @@
 
 import { Socket } from "net";
 import { commands, EventEmitter, ExtensionContext, window, workspace } from "vscode";
-import { InitializeResult, LanguageClientOptions } from "vscode-languageclient";
+import { InitializeResult, integer, LanguageClientOptions } from "vscode-languageclient";
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
 
 import {BaseFeature, ExtensionEnvironment} from "./base_feature";
@@ -67,6 +67,13 @@ export class FeatureDiplomatLSPClient extends BaseFeature {
      */
     public async start() : Promise<void> 
     {
+        if(this._client && this._client.isRunning())
+        {
+            this.logger?.info("Requested a language server reboot.");
+            this.logger?.info("Stop and dispose of the previously running client.");
+            // Stopping will be done by the dispose command
+            await this._client.dispose();
+        }
         this.logger?.info("Starting the language server client.");
         this._build_lspclient();
 
@@ -86,21 +93,22 @@ export class FeatureDiplomatLSPClient extends BaseFeature {
      */
     protected _build_lspclient()
     {
-        if ( workspace.getConfiguration("diplomatServer.server").get<boolean>("useTCP")) {
+        if ( workspace.getConfiguration("diplomat.server").get<boolean>("useTCP")) {
             // Development - Run the server in TCP mode
             console.log("Start the server in TCP mode...");
-            this._client = this._build_lsclient_tcp(8080);
+            const port = workspace.getConfiguration("diplomat.server").get<integer>("TCPPort") ?? 8080;
+            this._client = this._build_lsclient_tcp(port);
         } else {
             console.log("Start the server in IO mode...");
             // Production - Client is going to run the server (for use within `.vsix` package)
-            const serverExecutable = workspace.getConfiguration("diplomatServer").get<string>("serverPath");
-            const serverArgs = workspace.getConfiguration("diplomatServer").get<Array<string>>("serverArgs");
+            const serverExecutable = workspace.getConfiguration("diplomat.server").get<string>("path");
+            const serverArgs = workspace.getConfiguration("diplomat.server").get<Array<string>>("arguments");
             
             if (!serverExecutable) {
-                throw new Error("`diplomatServer.serverPath` is not set"); 
+                throw new Error("`diplomat.serverPath` is not set"); 
             }
             if (serverArgs === undefined) {
-                throw new Error("`diplomatServer.serverArgs` is not set");
+                throw new Error("`diplomat.serverArgs` is not set");
             }
             
             console.log("    Command is " + serverExecutable + " " + serverArgs);

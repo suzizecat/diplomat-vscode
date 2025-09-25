@@ -106,7 +106,7 @@ export class WorkspaceState {
 		if(!this._env.context.storageUri)
 			throw new Error("Trying to work with workspace features without an active workspace.");
 
-		let param_filepath = workspace.getConfiguration("diplomatServer.projects").get<string>("projectFilePath");
+		let param_filepath = workspace.getConfiguration("diplomat.projects").get<string>("projectFilePath");
 		
 		if(param_filepath && param_filepath.length > 0)
 		{

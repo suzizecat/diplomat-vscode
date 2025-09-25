@@ -420,7 +420,7 @@ export class DiplomatTestController {
 
 		run.end();
 
-		let reloadMode = vscode.workspace.getConfiguration("diplomatServer.waveformViewer").get<string>("reloadOnTestEnd");
+		let reloadMode = vscode.workspace.getConfiguration("diplomat.waveformViewer").get<string>("reloadOnTestEnd");
 
 		if (reloadMode == "always")
 		{

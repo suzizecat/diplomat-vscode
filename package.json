@@ -526,9 +526,9 @@
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/node": "^20.19.13",
-    "@types/vscode": "^1.104.0",
+    "@types/vscode": "^1.81.0",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "~2.22.0",
+    "@vscode/vsce": "~3.6.1",
     "esbuild": "^0.25.9",
     "js-yaml": "^4.1.0",
     "ts-patch": "^3.3.0",

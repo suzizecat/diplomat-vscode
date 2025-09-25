@@ -1,15 +1,17 @@
 # Changelog
 
-## WIP
-
- - Add support for projects within workspace
+# 0.4.0 - 2025-09-26
 
 ## Changed
 
- - Rework overall architecture
+ - Major architecture rework
+ - Use esbuild.js as a packager
 
 ## Added 
 
+ - Add first walkthrough
+ - Add dedicated file as proxy for Diplomat-LSP commands
+ - Add support for projects within workspace
  - Add verilog as supported languages (with SV syntax highlight)
  - Add server name and version informations
  - Add project tree-view
@@ -19,6 +21,7 @@
 ## Removed
 
  - Removed configuration `diplomatServer.server.configurationPath` (unused)
+ - Removed dependency to typia (not easily compatible with eslint)
 
 
 

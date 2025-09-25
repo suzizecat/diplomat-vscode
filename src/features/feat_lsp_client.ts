@@ -30,7 +30,7 @@ const semver = require('semver');
 // If wants to get the a
 // https://docs.github.com/fr/rest/releases/releases?apiVersion=2022-11-28#list-releases
 
-const REQUIRED_DIPLOMAT_LS_VERSION : string = "~0.3.0-dev";
+const REQUIRED_DIPLOMAT_LS_VERSION : string = "~0.3.0";
 
 export class FeatureDiplomatLSPClient extends BaseFeature {
 

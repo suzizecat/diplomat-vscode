@@ -47,6 +47,7 @@ export class DiplomatExtension {
 
     public constructor(protected _extension_environment : ExtensionEnvironment)
     {
+        commands.executeCommand('setContext', ContextVar.DiplomatEnabled, true);
         this._feat_lsp = new FeatureDiplomatLSPClient(this._extension_environment);
         this._feat_waveform = new FeatureWaveformViewer(this._extension_environment);
         this._feat_project = new FeatureProjectManagement(this._extension_environment);
@@ -74,7 +75,6 @@ export class DiplomatExtension {
 
         await this._feat_lsp.start();
         await this._feat_project.start();
-        commands.executeCommand('setContext', ContextVar.DiplomatEnabled, true);
         this.logger?.info(`Diplomat started in workspace ${get_workspace_base_uri()?.fsPath}`);
     }
 

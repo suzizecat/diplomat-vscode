@@ -48,6 +48,10 @@ export class FeatureDiplomatLSPClient extends BaseFeature {
         // Base setup of a feature
         super("lsp-client",ext_context);
 
+        
+        let lsp_logger = window.createOutputChannel("[diplomat] Server", { log: true })
+        ext_context.context.subscriptions.push(lsp_logger)
+
         // Client options used downstream.
         this._client_options = 
         {
@@ -56,7 +60,8 @@ export class FeatureDiplomatLSPClient extends BaseFeature {
                 { scheme: "file", language: "systemverilog" },
                 { scheme: "untitled", language: "systemverilog" },
             ],
-            outputChannelName: "[diplomat] Server"
+            outputChannelName: "[diplomat] Server",
+            outputChannel: lsp_logger
         };
     }
 

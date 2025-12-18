@@ -82,6 +82,8 @@ export class FeatureProjectManagement extends BaseFeature {
 
 	protected _build_gui()
 	{
+		console.log("Building project view");
+		//this._ext.context.subscriptions.push(vscode.window.createTreeView(dconst.VIEWS_ID_PRJ, { treeDataProvider: this._view, dragAndDropController: this._view }));
 		vscode.window.createTreeView(dconst.VIEWS_ID_PRJ, { treeDataProvider: this._view, dragAndDropController: this._view });
 		// this._view.refresh();
 	}
@@ -398,7 +400,6 @@ export class FeatureProjectManagement extends BaseFeature {
 	 */
 	public async _h_ignore_path(_ : any, paths: vscode.Uri[])
 	{
-
 		this._model.ignore_paths(paths)
 	}
 

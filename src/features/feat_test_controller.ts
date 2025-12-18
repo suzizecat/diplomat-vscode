@@ -47,7 +47,6 @@ export class FeatureTestController extends BaseFeature {
 		super("test-ctrl", ext_context);
 
 		this._controller = new DiplomatTestController(this._ext.context, this._h_on_test_finished);
-
 	}
 
 	/**

@@ -19,7 +19,7 @@
 import * as vscode from "vscode";
 import * as lsp from "vscode-languageclient";
 import * as dconst from "./constants";
-import { DiplomatProject, FileSymbolsLookupResult, HDLModule, HierarchyRecord, ModuleBlackBox, QualifiedHDLModule } from "./exchange_types";
+import { DiplomatProject, FileSymbolsLookupResult, HDLModule, HierarchyRecord, ModuleBlackBox, QualifiedHDLModule, FileAbstractContent } from "./exchange_types";
 
 /**
  * This namespace contains all function binding to the diplomat server custom functions.
@@ -115,6 +115,11 @@ export namespace DiplomatSrvCmds {
     export async function list_symbols(scope_path : string) : Promise<FileSymbolsLookupResult>
     {
         return vscode.commands.executeCommand<FileSymbolsLookupResult>("diplomat-server.list-symbols", scope_path);
+    }
+
+    export async function get_file_abstract_content(file : vscode.Uri) : Promise<FileAbstractContent>
+    {
+        return vscode.commands.executeCommand<FileAbstractContent>("diplomat-server.file.get-abstract", file);
     }
 
     /**

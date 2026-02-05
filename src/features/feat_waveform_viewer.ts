@@ -25,7 +25,7 @@ import { reveal_file } from "../utils";
 import { FileSymbolsLookupResult, WaveformViewerCbArgs } from "../exchange_types";
 import { DesignElement } from "../gui/designExplorerPanel";
 import { BaseViewer } from "./waveform/base_viewer";
-import { TextAnnotator } from "../text_annotator";
+import { WaveformTextAnnotator } from "./waveform/waveform_text_annotator";
 import { DiplomatSrvCmds } from "../language_server_cmds";
 
 
@@ -293,7 +293,7 @@ export class FeatureWaveformViewer extends BaseFeature {
 				// console.log(`Pushing annotations for ${elt_name}`)
 				for (let range of scope_symbols[elt_name]) 
 				{
-					annotations.push(TextAnnotator.inTextAnnotationAfter(
+					annotations.push(WaveformTextAnnotator.inTextAnnotationAfter(
 						`${elt.val}`,
 						range as Range
 					));

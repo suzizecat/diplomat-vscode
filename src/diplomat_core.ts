@@ -20,12 +20,13 @@
 import { commands} from 'vscode';
 import { ExtensionEnvironment } from './features/base_feature';
 import { FeatureDiplomatLSPClient } from './features/feat_lsp_client';
-import { ContextVar, get_workspace_base_uri } from './utils';
+import { ContextVar, get_workspace_base_uri, vscode_in_debug_mode } from './utils';
 import { FeatureWaveformViewer } from './features/feat_waveform_viewer';
 import { FeatureProjectManagement } from './features/feat_prj_management';
 import { FeatureEditor } from './features/feat_editor';
 import { FeatureHierarchyManagement } from './features/feat_hierarchy';
 import { FeatureTestController } from './features/feat_test_controller';
+import { FeatureDebug } from './features/feat_debug';
 
 
 
@@ -42,18 +43,22 @@ export class DiplomatExtension {
     protected _feat_editor: FeatureEditor;
     protected _feat_hier: FeatureHierarchyManagement;
     protected _feat_test: FeatureTestController;
+    protected _feat_debug: FeatureDebug;
 
     readonly logger = this._extension_environment.logger;
 
     public constructor(protected _extension_environment : ExtensionEnvironment)
     {
         commands.executeCommand('setContext', ContextVar.DiplomatEnabled, true);
+        commands.executeCommand('setContext', ContextVar.DebugEnabled, vscode_in_debug_mode());
+        
         this._feat_lsp = new FeatureDiplomatLSPClient(this._extension_environment);
         this._feat_waveform = new FeatureWaveformViewer(this._extension_environment);
         this._feat_project = new FeatureProjectManagement(this._extension_environment);
         this._feat_editor = new FeatureEditor(this._extension_environment);
         this._feat_hier = new FeatureHierarchyManagement(this._extension_environment);
         this._feat_test = new FeatureTestController(this._extension_environment);
+        this._feat_debug = new FeatureDebug(this._extension_environment);
 
         this._bind_events();
     }

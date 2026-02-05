@@ -53,6 +53,7 @@ export function vscode_in_debug_mode() : boolean {
 
 export enum ContextVar {
     DiplomatEnabled = "diplomat-host:enabled",
+    DebugEnabled = "diplomat-host:in-debug"
 };
 
 

@@ -109,6 +109,19 @@ export type FileSymbolsLookupResult = {
   [key:string] : lsp.Range[];
 }
 
+
+export type SymbolData = {
+  name : string, 
+  kind ?: string,
+  defRange : lsp.Location
+  refs : lsp.Location[]
+}
+
+export type FileAbstractContent = {
+  symbols : SymbolData[],
+  externalRefs : SymbolData[]
+}
+
 export type TestDiscoveryResults = {
   testsuite: string,
   kind: string,

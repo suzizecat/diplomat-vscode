@@ -301,6 +301,16 @@
         "command": "diplomat-host.prj.set-project",
         "title": "Set project as active",
         "category": "Diplomat"
+      },
+      {
+        "command": "diplomat-host.debug.expose-file-data",
+        "title" : "Debug: Expose file elements",
+        "category": "Diplomat"
+      },
+      {
+        "command": "diplomat-host.debug.clear-file-data",
+        "title" : "Debug: Clear file elements",
+        "category": "Diplomat"
       }
     ],
     "languages": [
@@ -456,8 +466,8 @@
     ],
     "colors": [
       {
-        "id": "diplomathost.annotationForeground",
-        "description": "Specifies the foreground color for the annotations",
+        "id": "diplomathost.annotation.waves.fg",
+        "description": "Specifies the foreground color for waveform inline value annotation",
         "defaults": {
           "dark": "#adbec5",
           "light": "#797a79",
@@ -465,12 +475,39 @@
         }
       },
       {
-        "id": "diplomathost.annotationBackground",
-        "description": "Specifies the background color for the annotations",
+        "id": "diplomathost.annotation.waves.bg",
+        "description": "Specifies the background color for waveform inline value annotation",
         "defaults": {
           "dark": "#1e2c31",
           "light": "#f4f5f4",
           "highContrast": "#1e2c31"
+        }
+      },
+      {
+        "id": "diplomathost.annotation.debug.ref.bg",
+        "description": "Specifies the background color for waveform inline value annotation",
+        "defaults": {
+          "dark": "#335e2a",
+          "light": "#8ef58e",
+          "highContrast": "#009b08"
+        }
+      },
+      {
+        "id": "diplomathost.annotation.debug.refext.bg",
+        "description": "Specifies the background color for waveform inline value annotation",
+        "defaults": {
+          "dark": "#702b72",
+          "light": "#ff85d0",
+          "highContrast": "#9b0086"
+        }
+      },
+      {
+        "id": "diplomathost.annotation.debug.def.bg",
+        "description": "Specifies the background color for waveform inline value annotation",
+        "defaults": {
+          "dark": "#8632327c",
+          "light": "#f58e8e",
+          "highContrast": "#9b0000"
         }
       }
     ],

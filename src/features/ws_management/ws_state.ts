@@ -174,6 +174,7 @@ export class WorkspaceState {
 				}
 			);
 			
+			this._env.logger?.info(`Configuration file has been read.`)
 			let paths_to_ignore = this._config.excludedPaths.map(utils.get_uri_from_path).filter((p) => {return p !== undefined;})
 
 			await this.ignore_paths(paths_to_ignore);
@@ -370,6 +371,8 @@ export class WorkspaceState {
 		}
 
 		await DiplomatSrvCmds.ignore_paths(p);
+
+		this._env.logger?.debug(`Ignore paths request finished successfully`);
 	}
 	
  }

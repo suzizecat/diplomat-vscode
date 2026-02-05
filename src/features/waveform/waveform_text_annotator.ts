@@ -41,12 +41,12 @@ import {
 	ThemableDecorationAttachmentRenderOptions,
 } from "vscode"
 
-export class TextAnnotator {
+export class WaveformTextAnnotator {
 	private static _internalMessageStyling(message: string): ThemableDecorationAttachmentRenderOptions {
 		return {
 			contentText: message,
-			color: new ThemeColor("diplomathost.annotationForeground"),
-			backgroundColor: new ThemeColor("diplomathost.annotationBackground"),
+			color: new ThemeColor("diplomathost.annotation.waves.fg"),
+			backgroundColor: new ThemeColor("diplomathost.annotation.waves.bg"),
 			fontStyle: "italic",
 			fontWeight: "400",
 			textDecoration: `;

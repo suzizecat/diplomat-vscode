@@ -5,7 +5,7 @@ import path = require('path');
 
 import { get_workspace_base_uri, getFileExtensionsForLanguageId } from '../../utils';
 import { HDLProject } from './project';
-import { BaseProjectElement, ProjectElementKind_t, ProjectFile, ProjectFolder } from './base_prj_element';
+import { BaseProjectElement, ProjectElementKind_t, ProjectFile, ProjectFolder, ProjectRoot } from './base_prj_element';
 
 // type ProjectElement = ProjectFolder | ProjectFile;
 
@@ -123,7 +123,7 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 		if(this.roots.has(prj.name))
 			this.removeProject(prj.name);
 		
-		let root = new ProjectFolder(prj.name,prj.name);
+		let root = new ProjectRoot(prj.name,prj.name);
 		root.contextValue = "project";
 		this.roots.set(root.id,root);
 			
@@ -298,6 +298,7 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 
 	public removeProject(prjName : string) {
 		this.roots.delete(prjName);
+		this.refresh()
 	}
 
 	public renameProject(oldName : string, newName : string) {

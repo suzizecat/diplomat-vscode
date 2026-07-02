@@ -472,11 +472,12 @@ export class ProjectFolder extends BaseProjectElement {
         } 
     }
 
-    
-    
-
 }
 
+
+export class ProjectRoot extends ProjectFolder {
+     public get kind() {return ProjectElementKind_t.Project;}
+}
 
 export class ProjectFile extends BaseProjectElement {
     public defined: boolean = true;

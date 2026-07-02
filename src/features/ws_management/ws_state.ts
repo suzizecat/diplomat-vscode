@@ -196,7 +196,9 @@ export class WorkspaceState {
 	 */
 	protected _refresh_projects_from_config()
 	{
+		let _old_conf = structuredClone(this._config);
 		this.remove_projects();
+		this._config = _old_conf;
 		this.register_projects(this._config.projects.map((prj) => HDLProject.fromDiplomatProject(prj) ));
 	}
 
@@ -277,6 +279,8 @@ export class WorkspaceState {
 				}
 			}
 		}
+
+		this._refresh_projects_to_config()
 
 		if(removed_projects.length > 0)
 			this._evt.prj_removed.fire(removed_projects);

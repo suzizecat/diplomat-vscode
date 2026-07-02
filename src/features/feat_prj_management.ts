@@ -24,7 +24,7 @@ import {DiplomatProject, HDLModule, ModuleBlackBox } from "../exchange_types";
 import * as utils from "../utils";
 import { WorkspaceState } from './ws_management/ws_state';
 import { HDLProject } from './ws_management/project';
-import { BaseProjectElement, ProjectFile, ProjectFolder } from './ws_management/base_prj_element';
+import { BaseProjectElement, ProjectElementKind_t, ProjectFile, ProjectFolder } from './ws_management/base_prj_element';
 import { DiplomatSrvCmds } from '../language_server_cmds';
 
 
@@ -62,6 +62,10 @@ export class FeatureProjectManagement extends BaseFeature {
 		this._model.on_prj_updated((prj) => this.send_projects_to_lsp(prj.map(p => p.name)),this);
 		this._model.on_prj_activated((prj) => this.send_projects_to_lsp([prj.name]),this);
 		this._model.on_config_loaded((_) => this.send_active_projects_to_lsp(),this);
+
+		this._model.on_prj_registered((_) => this.save_config(), this);
+		this._model.on_prj_activated((_) => this.save_config(), this);
+		this._model.on_prj_updated((_) => this.save_config(), this);
 	}
 
 	protected _bind_commands()
@@ -73,6 +77,7 @@ export class FeatureProjectManagement extends BaseFeature {
 		this.bind("diplomat-host.set-top", this.set_top_from_file, this);
 		
 		this.bind("diplomat-host.save-config", this.save_config, this);
+		this.bind("diplomat-host.load-workspace", this._model.load, this._model);
 		this.bind("diplomat-host.show-config", this.open_config_file, this);
 
 		this.bind("diplomat-host.prj.refresh-prj",this.reprocess_project,this);
@@ -91,6 +96,7 @@ export class FeatureProjectManagement extends BaseFeature {
 	public async start()
 	{
 		await this._model.load();
+		this._view.refresh();
 	}
 
 	// #############################################################################
@@ -115,16 +121,21 @@ export class FeatureProjectManagement extends BaseFeature {
 			
 			let flist = [];
 			
-			
-			for (let elt of target.leaves)
+			if(target.kind == ProjectElementKind_t.Project)
+				this._model.remove_projects([prj]);
+			else
 			{
-				if (elt.resourceUri)
+			
+				for (let elt of target.leaves)
 				{
-					flist.push(elt.resourceUri);
+					if (elt.resourceUri)
+					{
+						flist.push(elt.resourceUri);
+					}
 				}
+				this._model.remove_files(prj, flist);
 			}
 
-			this._model.remove_files(prj, flist);
 			this._view.removePrjElement(target);
 		}	
 		

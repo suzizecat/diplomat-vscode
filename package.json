@@ -51,7 +51,7 @@
     "viewsWelcome": [
       {
         "view": "diplomat-prj",
-        "contents": "No project seems to be setup in the current workspace. You may automatically build a project using an already existing top file or create an empty project.\n[Create Empty Project](command:diplomat-host.prj.create-project)\n[Create Project from File](command:diplomat-host.prj.create-project-from-top)"
+        "contents": "No project seems to be setup in the current workspace. You may automatically build a project using an already existing top file or create an empty project.\n[Create Empty Project](command:diplomat-host.prj.create-project)\n[Create Project from File](command:diplomat-host.prj.create-project-from-top)\n[Open the workspace configuration](command:diplomat-host.show-config)"
       }
     ],
     "menus": {
@@ -216,6 +216,11 @@
       {
         "command": "diplomat-host.save-config",
         "title": "Diplomat: Save the configuration"
+      },
+      {
+        "command": "diplomat-host.load-workspace",
+        "category": "Diplomat",
+        "title": "Reload the workspace"
       },
       {
         "command": "diplomat-server.push-config",

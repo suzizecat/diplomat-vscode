@@ -26,6 +26,7 @@ import { WorkspaceState } from './ws_management/ws_state';
 import { HDLProject } from './ws_management/project';
 import { BaseProjectElement, ProjectElementKind_t, ProjectFile, ProjectFolder } from './ws_management/base_prj_element';
 import { DiplomatSrvCmds } from '../language_server_cmds';
+import { getFileExtensionsForLanguageId } from '../utils';
 
 
 
@@ -66,6 +67,8 @@ export class FeatureProjectManagement extends BaseFeature {
 		this._model.on_prj_registered((_) => this.save_config(), this);
 		this._model.on_prj_activated((_) => this.save_config(), this);
 		this._model.on_prj_updated((_) => this.save_config(), this);
+
+		this._view.on_file_dropped((finfo) => this.add_files(finfo.project,finfo.element),this);
 	}
 
 	protected _bind_commands()
@@ -294,6 +297,8 @@ export class FeatureProjectManagement extends BaseFeature {
 
 	public async send_projects_to_lsp(projects ?: string[]  )
 	{
+		const sources_extensions : string[] = getFileExtensionsForLanguageId("systemverilog")
+		                                     .concat(getFileExtensionsForLanguageId("verilog"));
 		let to_send : DiplomatProject[] = [];
 		if(! projects)
 			to_send = structuredClone(this._model.config.projects);
@@ -303,7 +308,8 @@ export class FeatureProjectManagement extends BaseFeature {
 
 		for(let prj of to_send)
 		{
-
+			// Only sends paths that are actual sources.
+			prj.sourceList = prj.sourceList.filter((path) => sources_extensions.includes(path.substring(path.lastIndexOf("."))));
 			prj.sourceList = prj.sourceList.map(
 				(path) => {
 					try {
@@ -412,6 +418,16 @@ export class FeatureProjectManagement extends BaseFeature {
 	public async _h_ignore_path(_ : any, paths: vscode.Uri[])
 	{
 		this._model.ignore_paths(paths)
+	}
+
+	public async add_files(project : string, uris : vscode.Uri[])
+	{
+		for (let file_uri of uris)
+		{
+			this._view.addFileToProject(project,file_uri,false,false);
+		}
+		this._model.add_files(project,uris);
+		this._view.refresh();
 	}
 
 }

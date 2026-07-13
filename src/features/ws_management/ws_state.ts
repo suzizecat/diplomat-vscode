@@ -23,7 +23,7 @@ import { ExtensionEnvironment } from "../base_feature";
 import * as utils from "../../utils";
 import { HDLProject } from "./project";
 import { DiplomatSrvCmds } from "../../language_server_cmds";
-
+import * as Exceptions from "../../exceptions";
 
 /**
  * Lightweight container to keep stuff somewhat tidy in {@link WorkspaceState}
@@ -164,13 +164,17 @@ export class WorkspaceState {
 			throw new Error("No path to save the configuration");
 
 		// Save the 'old' configuration for restoration in case of a downstream issue.
-		let old_config = this._config;
+		let old_config = structuredClone(this._config);
 
 		 try 
 		 {
 			await workspace.fs.readFile(path).then(
 				(data) => {
 					this._config = JSON.parse(new TextDecoder().decode(data));
+				}
+				,(reject_reason) => {
+					this._env.logger?.error(`Failed to read the configuration file ${path}: ${reject_reason}`);
+					throw new Exceptions.ConfigFileReadError(`Failed to read the configuration file ${path}: ${reject_reason}`);
 				}
 			);
 			

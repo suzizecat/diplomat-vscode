@@ -96,10 +96,10 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 			return Promise.reject();
 		let droppedUri : vscode.Uri[] = items.split("\r\n").map((v) => {return vscode.Uri.parse(v);});
 
-		for(let uri of droppedUri)
-		{
-			await this.addFileToProject(prjName,uri);
-		}
+		// for(let uri of droppedUri)
+		// {
+		// 	await this.addFileToProject(prjName,uri);
+		// }
 		this._evt.file_dropped.fire({project: prjName, element : droppedUri});
 		return Promise.resolve();
 	}
@@ -205,10 +205,11 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 	 * @param prj Project name to target
 	 * @param fpath URI to the file to add
 	 * @param fromLoad If set, skip the attempt to add the file to the HDL project.
+	 * @param refresh If set, refresh the view after adding. This allows bulk addition without refreshing each time.
 	 * This is used in {@link processProject}, as the file already comes from the HDL project
 	 * @returns the ProjectFile element created
 	 */
-	public async addFileToProject(prj : string, fpath : vscode.Uri, fromLoad : boolean = false) : Promise<ProjectFile>
+	public async addFileToProject(prj : string, fpath : vscode.Uri, fromLoad : boolean = false, refresh = true) : Promise<ProjectFile>
 	{
 		let ws_uri = get_workspace_base_uri();
 		if(! ws_uri)
@@ -254,7 +255,8 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 
 		let ret = new ProjectFile(fpath,nearest);
 
-		this.refresh();
+		if (refresh)
+			this.refresh();
 		return Promise.resolve(ret);
 	}
 

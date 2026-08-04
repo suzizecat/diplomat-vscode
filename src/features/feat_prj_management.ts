@@ -38,6 +38,8 @@ export class FeatureProjectManagement extends BaseFeature {
 	/** URI to the config file related to the project */
 	protected _user_config_file_path ?: vscode.Uri;
 
+	protected _last_used_file_export_uri ?: vscode.Uri;
+
 	
 
 	public get on_config_loaded() {return this._model.on_config_loaded};
@@ -86,6 +88,8 @@ export class FeatureProjectManagement extends BaseFeature {
 		this.bind("diplomat-host.prj.refresh-prj",this.reprocess_project,this);
 
 		this.bind("diplomat-host.prj.ignore", this._h_ignore_path,this);
+		this.bind("diplomat-host.prj.export-fileset", this._h_export_fileset,this);
+		
 	}
 
 	protected _build_gui()
@@ -428,6 +432,89 @@ export class FeatureProjectManagement extends BaseFeature {
 		}
 		this._model.add_files(project,uris);
 		this._view.refresh();
+	}
+
+	/**
+	 * Save the current projet fileset to a makefile-compatible file.
+	 * @param path URI to the target makefile path
+	 * @returns A promise resolving to none
+	 */
+	public async save_fileset_as_makefile(path ?: vscode.Uri)
+	{
+		if(! this._model.active_project)
+			return Promise.reject("No active project");
+		if(! path)
+		{
+			path = await vscode.window.showSaveDialog({filters:{"Makefiles" : ["mk","Makefile"]}, saveLabel:"Target File",defaultUri:this._last_used_file_export_uri});
+		}
+		
+		if(! path)
+			return Promise.reject();
+		else
+			this._last_used_file_export_uri = path;
+
+		this._ext.logger?.info(`Saving fileset as makefile to ${path.toString()}`);
+		let source_list_lines : string[] = [];
+		source_list_lines.push(`# Fileset for project ${this._model.active_project.name}`);
+		source_list_lines.push("# Generated from the Diplomat extension");
+		source_list_lines.push("# Use the include directive in your makefile as well as redefining");
+		source_list_lines.push("# DIPLOMAT_ROOT if needed.");
+		source_list_lines.push("");
+		source_list_lines.push("DIPLOMAT_VERILOG_SOURCES ?= ");
+		source_list_lines.push(`DIPLOMAT_ROOT ?= ${utils.get_workspace_base_uri()?.fsPath}`);
+		if(this._model.active_project?.sourceFiles)
+		{
+			for(let file of this._model.active_project.sourceFiles)
+			{
+				source_list_lines.push(`DIPLOMAT_VERILOG_SOURCES += $(DIPLOMAT_ROOT)/${file}`);
+			}
+		}
+		vscode.workspace.fs.writeFile(path,new TextEncoder().encode(source_list_lines.join("\n")));
+		return Promise.resolve();
+	}
+
+	public async save_fileset_as_plain_text(path ?: vscode.Uri)
+	{
+		if(! path)
+		{
+			path = await vscode.window.showSaveDialog({saveLabel:"Target File",defaultUri:this._last_used_file_export_uri});
+		}
+		
+		if(! path)
+			return Promise.reject();
+		else
+			this._last_used_file_export_uri = path;
+
+		this._ext.logger?.info(`Saving fileset as plain text to ${path.toString()}`);
+		let source_list_lines : string[] = [];
+		if(this._model.active_project?.sourceFiles)
+		{
+			for(let file of this._model.active_project.sourceFiles)
+			{
+				source_list_lines.push(file);
+			}
+		}
+		vscode.workspace.fs.writeFile(path,new TextEncoder().encode(source_list_lines.join("\n")));
+		return Promise.resolve();
+	}
+
+	public async _h_export_fileset() {
+		let target = await vscode.window.showQuickPick(["Makefile","Plain text"])
+		switch(target)
+		{
+			case "Makefile" :
+				await this.save_fileset_as_makefile();
+				break;
+			case "Pain text" :
+				await this.save_fileset_as_plain_text();
+				break;
+			default :
+				return Promise.reject("No export kind provided");
+		}
+
+		vscode.window.showInformationMessage("Fileset exported successfully");
+		return Promise.resolve();
+		
 	}
 
 }

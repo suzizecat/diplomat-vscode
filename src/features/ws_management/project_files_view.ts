@@ -96,10 +96,10 @@ export class ProjectFileTreeProvider implements vscode.TreeDataProvider<BaseProj
 			return Promise.reject();
 		let droppedUri : vscode.Uri[] = items.split("\r\n").map((v) => {return vscode.Uri.parse(v);});
 
-		// for(let uri of droppedUri)
-		// {
-		// 	await this.addFileToProject(prjName,uri);
-		// }
+		for(let uri of droppedUri)
+		{
+			await this.addFileToProject(prjName,uri);
+		}
 		this._evt.file_dropped.fire({project: prjName, element : droppedUri});
 		return Promise.resolve();
 	}

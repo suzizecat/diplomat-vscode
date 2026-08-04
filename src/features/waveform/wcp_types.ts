@@ -17,29 +17,193 @@
  */
 
 
-export type Greetings = {
-	type : string ;
-	version : string;
-	commands : string[];
-}
+// export type Greetings = {
+// 	type : string ;
+// 	version : string;
+// 	commands : string[];
+// }
 
-export enum CommandsNames {
-	AddItem="add_items",
-	AddMarkers = "add_markers",
-	Clear="clear",
-	FocusItem="focus_item",
-	GetItemInfo = "get_item_info",
-	GetItemList = "get_item_list",
-	Load="load",
-	Reload="reload",
-	RemoveItems="remove_items",
-	SetCursor="set_cursor",
-	SetItemColor= "set_item_color",
-	SetViewportTo="set_viewport_to",
-	Shutdown="shutdown",
-	ZoomToFit="zoom_to_fit",
-}
 
-export enum EventsNames {
-	WaveformsLoaded = "waveform_loaded"
+// export enum CommandsNames {
+// 	AddItems="add_items",
+// 	AddMarkers = "add_markers",
+// 	Clear="clear",
+// 	FocusItem="focus_item",
+// 	GetItemInfo = "get_item_info",
+// 	GetItemList = "get_item_list",
+// 	Load="load",
+// 	Reload="reload",
+// 	RemoveItems="remove_items",
+// 	SetCursor="set_cursor",
+// 	SetItemColor= "set_item_color",
+// 	SetViewportTo="set_viewport_to",
+// 	Shutdown="shutdown",
+// 	ZoomToFit="zoom_to_fit",
+// }
+
+// export enum EventsNames {
+// 	WaveformsLoaded = "waveform_loaded"
+// }
+
+/**
+ * JSON Schema for the WCP protocol
+ */
+export type WaveformViewerControlProtocol =
+  | Greeting
+  | Command
+  | Response
+  | Event
+  | Error
+export type Command =
+  | {
+      command : "get_item_list"
+    }
+  | {
+      command : "get_item_info"
+      ids: DisplayedItemRef[]
+    }
+  | {
+      command : "set_item_color"
+      id: DisplayedItemRef
+      color: string
+    }
+  | {
+      command : "add_items"
+      items: ItemPath[]
+      recursive: boolean
+    }
+  | {
+      command : "remove_items"
+      ids: DisplayedItemRef[]
+    }
+  | {
+      command : "focus_item"
+      id: DisplayedItemRef
+    }
+  | {
+      command : "add_markers"
+      items: MarkerInfo[]
+    }
+  | {
+      command : "set_viewport_to"
+      timestamp: number
+    }
+  | {
+      command : "zoom_to_fit"
+    }
+  | {
+      command : "set_cursor"
+      timestamp: number
+    }
+  | {
+      command : "load"
+      source: string
+    }
+  | {
+      command : "reload"
+    }
+  | {
+      command : "clear"
+    }
+  | {
+      command : "shutdown"
+    }
+  | {
+      command : "add_variables"
+      variables: VariablePath[]
+    }
+  | {
+      command : "add_scope"
+      scope: Scope
+    }
+/**
+ * A unique reference to a displayed item in the waveform viewer
+ */
+export type DisplayedItemRef = string | number
+/**
+ * Hierarchical path to a scope or variable (e.g., 'top.submodule.variable')
+ */
+export type ItemPath = string
+/**
+ * Deprecated: Hierarchical path to a variable
+ */
+export type VariablePath = string
+/**
+ * Deprecated: Hierarchical path to a scope
+ */
+export type Scope = string
+export type Response =
+  | {
+      command : "get_item_list"
+      ids: DisplayedItemRef[]
+      [k: string]: unknown
+    }
+  | {
+      command : "get_item_info"
+      results: ItemInfo[]
+      [k: string]: unknown
+    }
+  | {
+      command : "add_items"
+      ids: DisplayedItemRef[]
+      [k: string]: unknown
+    }
+  | {
+      command : "add_markers"
+      ids: DisplayedItemRef[]
+      [k: string]: unknown
+    }
+  | {
+      command : "ack"
+      [k: string]: unknown
+    }
+  | {
+      command : "add_variables"
+      ids: DisplayedItemRef[]
+      [k: string]: unknown
+    }
+  | {
+      command : "add_scope"
+      ids: DisplayedItemRef[]
+      [k: string]: unknown
+    }
+export type Event =
+  | {
+      event?: "waveforms_loaded"
+      [k: string]: unknown
+    }
+  | {
+      event?: "cursor_set"
+      timestamp?: number
+      [k: string]: unknown
+    }
+
+export interface Greeting {
+  type: "greeting"
+  version: string
+  commands: string[]
+}
+/**
+ * Information about a marker
+ */
+export interface MarkerInfo {
+  timestamp: number
+  name?: string
+  move_focus: boolean
+}
+/**
+ * Information about a displayed item
+ */
+export interface ItemInfo {
+  name: string
+  type: string
+  id: DisplayedItemRef
+}
+/**
+ * Error message sent when a command fails or version is unsupported
+ */
+export interface Error {
+  type: "error"
+  message?: string
+  [k: string]: unknown
 }

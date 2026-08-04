@@ -99,6 +99,7 @@ export async function does_path_exist(path : vscode.Uri) : Promise<boolean>
 export function get_workspace_base_uri() : vscode.Uri | undefined
 {
     return vscode.workspace.workspaceFolders?.at(0)?.uri;
+    
 }
 
 export function get_prj_filepath_from_uri(fpath: vscode.Uri, ref_loc?: vscode.Uri) : string

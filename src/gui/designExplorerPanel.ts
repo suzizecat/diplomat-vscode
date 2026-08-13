@@ -106,7 +106,8 @@ export class DesignHierarchyTreeProvider implements vscode.TreeDataProvider<Desi
 	
 	getChildren(element?: DesignElement): Thenable<DesignElement[]> {
 		if(element) {
-			return Promise.resolve(element.children);
+			// Remove all the 'sort' stuff for a sorting that matches the declaration order
+			return Promise.resolve(element.children.sort((a,b) => (a.name.localeCompare(b.name))));
 		} else {
 			return this.fetchData();
 		}

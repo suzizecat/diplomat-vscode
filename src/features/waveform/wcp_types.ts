@@ -56,63 +56,79 @@ export type WaveformViewerControlProtocol =
   | Error
 export type Command =
   | {
+      type : "command"
       command : "get_item_list"
     }
   | {
+      type : "command"
       command : "get_item_info"
       ids: DisplayedItemRef[]
     }
   | {
+      type : "command"
       command : "set_item_color"
       id: DisplayedItemRef
       color: string
     }
   | {
+      type : "command"
       command : "add_items"
       items: ItemPath[]
       recursive: boolean
     }
   | {
+      type : "command"
       command : "remove_items"
       ids: DisplayedItemRef[]
     }
   | {
+      type : "command"
       command : "focus_item"
       id: DisplayedItemRef
     }
   | {
+      type : "command"
       command : "add_markers"
       items: MarkerInfo[]
     }
   | {
+      type : "command"
       command : "set_viewport_to"
       timestamp: number
     }
   | {
+      type : "command"
       command : "zoom_to_fit"
     }
   | {
+      type : "command"
       command : "set_cursor"
       timestamp: number
     }
   | {
+      type : "command"
       command : "load"
       source: string
     }
   | {
+      type : "command"
       command : "reload"
     }
   | {
+      type : "command"
       command : "clear"
     }
   | {
+      type : "command"
       command : "shutdown"
     }
   | {
+      type : "command"
       command : "add_variables"
       variables: VariablePath[]
     }
   | {
+      type : "command"
       command : "add_scope"
       scope: Scope
     }
@@ -134,46 +150,55 @@ export type VariablePath = string
 export type Scope = string
 export type Response =
   | {
+      type : "response"
       command : "get_item_list"
       ids: DisplayedItemRef[]
       [k: string]: unknown
     }
   | {
+      type : "response"
       command : "get_item_info"
       results: ItemInfo[]
       [k: string]: unknown
     }
   | {
+      type : "response"
       command : "add_items"
       ids: DisplayedItemRef[]
       [k: string]: unknown
     }
   | {
+      type : "response"
       command : "add_markers"
       ids: DisplayedItemRef[]
       [k: string]: unknown
     }
   | {
+      type : "response"
       command : "ack"
       [k: string]: unknown
     }
   | {
+      type : "response"
       command : "add_variables"
       ids: DisplayedItemRef[]
       [k: string]: unknown
     }
   | {
+      type : "response"
       command : "add_scope"
       ids: DisplayedItemRef[]
       [k: string]: unknown
     }
 export type Event =
   | {
-      event?: "waveforms_loaded"
+      type : "event"
+      event: "waveforms_loaded"
       [k: string]: unknown
     }
   | {
-      event?: "cursor_set"
+      type : "event"
+      event: "cursor_set"
       timestamp?: number
       [k: string]: unknown
     }

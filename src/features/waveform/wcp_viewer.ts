@@ -17,6 +17,7 @@
  */
 
 import * as net from "node:net";
+import * as nodeEvt from "node:events";
 import * as vscode from "vscode";
 
 import * as types from "./wcp_types";
@@ -25,7 +26,7 @@ import * as types from "./wcp_types";
 namespace WCP {
 class _WCPEvents {
 	public connection_established = new vscode.EventEmitter<void>();
-	public msg_received = new vscode.EventEmitter<types.Response | types.Error>();
+	public msg_received = new vscode.EventEmitter<types.Response | types.Event | types.Error>();
 }
 
  /**
@@ -60,7 +61,8 @@ class _WCPEvents {
 
 	private rd_promise_subscription ?: vscode.Disposable;
 
-
+	// Dispatcher will be used to register for replies and events.
+	protected _dispatcher : nodeEvt.EventEmitter = new nodeEvt.EventEmitter();
 
 	// ! Events
 	readonly on_connected = this._evt.connection_established.event;
@@ -84,7 +86,7 @@ class _WCPEvents {
 		this._conn.on("data", (data : string) => {
 			let startpos = this._in_message ? 0 : -1;
 			const chars = [...data];
-
+			// Roughly decode JSON in order to emit proper JSON structures
 			chars.forEach((c,i) => {
 				if(c == "{")
 				{
@@ -165,6 +167,9 @@ class _WCPEvents {
 		return await this.send_base_command("",cmd);
 	}
 
+
+	// Either implement a systematic feedback function (for each received message, trigger an event which may or may not be bound)
+	// Or use high-level functions binding "once" events.
 
 	// !Getters and Setters
  

@@ -38,11 +38,18 @@ export function generate_bb_instance_as_string(bb : ModuleBlackBox) : string
     }
 
     to_insert += `u_${bb.module.toLowerCase()} (\n`;
-    for(let port of bb.ports)
+    
+    for(let port of bb.ports.slice(0,-1))
     {
         to_insert += `\t.${port.name}(${port.name}), ${port.comment}\n`;
     }
-    to_insert = to_insert.slice(0,-2) + "\n);";
+    if(bb.ports.length > 1 )
+    {
+        let port = bb.ports.at(-1);
+        if(port)
+            to_insert += `\t.${port.name}(${port.name}) ${port.comment}\n`
+    }
+    to_insert = to_insert + ");\n";
 
     return to_insert;
 }
@@ -75,11 +82,17 @@ export function generate_bb_instance_as_snippet(bb : ModuleBlackBox) : vscode.Sn
     }
 
     to_insert += `\${1:u_${bb.module.toLowerCase()}} (\n`;
-    for(let port of bb.ports)
+    for(let port of bb.ports.slice(0,-1))
     {
         to_insert += `\t.${port.name}(${port.name}), ${port.comment}\n`;
     }
-    to_insert = to_insert.slice(0,-2) + "\n);\n$0";
+    if(bb.ports.length > 1 )
+    {
+        let port = bb.ports.at(-1);
+        if(port)
+            to_insert += `\t.${port.name}(${port.name}) ${port.comment}\n`
+    }
+    to_insert = to_insert + ");\n$0";
 
     to_insert = to_insert.replace("\t",indent).replace(/\n/g,`\n${indent}`);
 

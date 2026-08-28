@@ -3,7 +3,7 @@
   "displayName": "Diplomat",
   "description": "",
   "publisher": "jfaucher",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "repository": {},
   "engines": {
     "vscode": "^1.81.0"
@@ -15,7 +15,8 @@
     "Linters"
   ],
   "activationEvents": [
-    "onLanguage:systemverilog"
+    "onLanguage:systemverilog",
+    "onLanguage:verilog"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -62,14 +63,29 @@
           "group": "navigation@0"
         },
         {
+          "command": "diplomat-host.gui.hier-mode.alt_to_ref",
+          "group": "navigation@1",
+          "when": "view == design-hierarchy && diplomat-host:hierClickMode == 'alternate'"
+        },
+        {
+          "command": "diplomat-host.gui.hier-mode.ref_to_def",
+          "group": "navigation@1",
+          "when": "view == design-hierarchy && diplomat-host:hierClickMode == 'ref'"
+        },
+        {
+          "command": "diplomat-host.gui.hier-mode.def_to_alt",
+          "group": "navigation@1",
+          "when": "view == design-hierarchy && diplomat-host:hierClickMode == 'def'"
+        },
+        {
           "command": "diplomat-host.waves.enable-follow",
           "when": "view == design-hierarchy && diplomat-host:viewerCanFollowSignal && !diplomat-host:followWaveSelection",
-          "group": "navigation@1"
+          "group": "navigation@2"
         },
         {
           "command": "diplomat-host.waves.disable-follow",
           "when": "view == design-hierarchy && diplomat-host:viewerCanFollowSignal && diplomat-host:followWaveSelection",
-          "group": "navigation@1"
+          "group": "navigation@2"
         },
         {
           "command": "diplomat-host.prj.create-project",
@@ -103,7 +119,7 @@
           "group": "1_diplomat",
           "when": "view == diplomat-prj && viewItem == project"
         },
-         {
+        {
           "command": "diplomat-host.prj.refresh-prj",
           "group": "inline",
           "when": "view == diplomat-prj && viewItem == project"
@@ -169,6 +185,18 @@
         {
           "command": "diplomat-host.waves.reload",
           "when": "diplomat-host:viewerEnabled"
+        },
+        {
+          "command": "diplomat-host.gui.hier-mode.alt_to_ref",
+          "when": "never"
+        },
+        {
+          "command": "diplomat-host.gui.hier-mode.ref_to_def",
+          "when": "never"
+        },
+        {
+          "command": "diplomat-host.gui.hier-mode.def_to_alt",
+          "when": "never"
         }
       ]
     },
@@ -187,7 +215,7 @@
         "command": "diplomat-host.prj.refresh-prj",
         "category": "Diplomat",
         "title": "Re-process project",
-        "icon" : "$(refresh)"
+        "icon": "$(refresh)"
       },
       {
         "command": "diplomat-host.refresh-hierarchy",
@@ -315,13 +343,31 @@
       },
       {
         "command": "diplomat-host.debug.expose-file-data",
-        "title" : "Debug: Expose file elements",
+        "title": "Debug: Expose file elements",
         "category": "Diplomat"
       },
       {
         "command": "diplomat-host.debug.clear-file-data",
-        "title" : "Debug: Clear file elements",
+        "title": "Debug: Clear file elements",
         "category": "Diplomat"
+      },
+      {
+        "command": "diplomat-host.gui.hier-mode.alt_to_ref",
+        "title": "Alternate target",
+        "icon":"$(sync)",
+        "category": "Diplomat - GUI"
+      },
+      {
+        "command": "diplomat-host.gui.hier-mode.ref_to_def",
+        "title": "Go to reference mode",
+        "icon":"$(references)",
+        "category": "Diplomat - GUI"
+      },
+      {
+        "command": "diplomat-host.gui.hier-mode.def_to_alt",
+        "title": "Go to definition mode",
+        "icon":"$(file-code)",
+        "category": "Diplomat - GUI"
       }
     ],
     "languages": [
@@ -337,15 +383,15 @@
           ".SV",
           ".svh",
           ".SVH",
-          ".svi",
-          ".v"
+          ".svi"
         ],
         "configuration": "./configs/systemverilog.configuration.json"
       },
       {
         "id": "verilog",
         "aliases": [
-          "Verilog"
+          "Verilog",
+	  "verilog"
         ],
         "extensions": [
           ".v"
@@ -372,7 +418,7 @@
       {
         "language": "verilog",
         "scopeName": "source.verilog",
-        "path": "./syntaxes/systemverilog.tmLanguage.json"
+        "path": "./syntaxes/verilog.tmLanguage.json"
       }
     ],
     "configuration": [
@@ -386,7 +432,7 @@
             "default": "slang-lsp",
             "order": 0
           },
-            "diplomat.server.arguments": {
+          "diplomat.server.arguments": {
             "description": "Server arguments",
             "type": "array",
             "items": {
@@ -411,7 +457,7 @@
       {
         "title": "Tools",
         "order": 10,
-        "properties": {        
+        "properties": {
           "diplomat.tools.GTKWave.path": {
             "description": "GTKWave executable path",
             "type": "string",
@@ -436,13 +482,12 @@
         "title": "Features",
         "order": 2,
         "properties": {
-           "diplomat.projects.projectFilePath": {
+          "diplomat.projects.projectFilePath": {
             "scope": "resource",
             "description": "Path for the diplomat projects configuration file. If empty (default) the storage will be located in the VSCode Extension storage space.",
             "type": "string",
             "default": ""
           },
-        
           "diplomat.index.validExtensions": {
             "description": "Valid systemverilog extensions for indexing",
             "type": "array",
@@ -532,7 +577,9 @@
             "id": "get-server",
             "title": "Getting Diplomat Server",
             "description": "In order to use Diplomat, you need to get the server.\n[Go to the release page](https://github.com/suzizecat/slang-lsp-tools/releases/latest)\n[Visit the Github page](https://github.com/suzizecat/slang-lsp-tools)",
-            "media": {"markdown": "resources/walkthrough/get_diplomat.md"},
+            "media": {
+              "markdown": "resources/walkthrough/get_diplomat.md"
+            },
             "completionEvents": [
               "onLink:https://github.com/suzizecat/slang-lsp-tools",
               "onLink:https://github.com/suzizecat/slang-lsp-tools/releases/latest"
@@ -542,7 +589,9 @@
             "id": "set-path",
             "title": "Setting Diplomat paths",
             "description": "This step will help you with the very basic settings required for Diplomat\n[Show Diplomat settings](command:workbench.action.openSettings?%22@ext:jfaucher.diplomat-host%22)",
-            "media": {"markdown": "resources/walkthrough/settings_srv.md"},
+            "media": {
+              "markdown": "resources/walkthrough/settings_srv.md"
+            },
             "completionEvents": [
               "onSettingChanged:diplomatServer.server.useTCP",
               "onSettingChanged:diplomatServer.serverPath",
@@ -556,7 +605,9 @@
     ]
   },
   "scripts": {
-    "yj": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json",
+    "yj-sv": "js-yaml ./syntaxes/systemverilog.tmLanguage.yaml >./syntaxes/systemverilog.tmLanguage.json",
+    "yj-v": "js-yaml ./syntaxes/verilog.tmLanguage.yaml >./syntaxes/verilog.tmLanguage.json",
+    "yj": "npm run yj-sv; npm run yj-v",
     "precompile": "npm run yj && npm run check-types",
     "manual-compile": "npm run precompile && node esbuild.js",
     "compile": "node esbuild.js",
@@ -583,7 +634,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
-    "fast-xml-parser": "~4.4.1",
+    "fast-xml-parser": "^5.9.3",
     "semver": "~7.7",
     "ts-semaphore": "1.0.0",
     "vscode-languageclient": "9.0.1",

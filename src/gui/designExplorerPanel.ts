@@ -19,6 +19,9 @@
 import * as vscode from 'vscode';
 import { HierarchyRecord } from '../exchange_types';
 import { DiplomatSrvCmds } from '../language_server_cmds';
+import { TextDocumentPositionParams } from 'vscode-languageclient';
+
+
 
 
 export class DesignElement extends vscode.TreeItem {
@@ -26,6 +29,7 @@ export class DesignElement extends vscode.TreeItem {
 	private _childs : DesignElement[] = [];
 	public defined: boolean = true;
 	public fileUri: vscode.Uri | null = null;
+	public refPosition : TextDocumentPositionParams | null = null;
 	constructor(
 		public readonly label: string,
 		parent : DesignElement | null = null,
@@ -157,6 +161,7 @@ export class DesignHierarchyTreeProvider implements vscode.TreeDataProvider<Desi
 		
 		
 		let ret = new DesignElement(rec.name != "" ? rec.name : rec.module , parent);
+		
 		ret.defined = rec.def;
 		ret.description = rec.module;
 		// if(rec.def) {
@@ -176,9 +181,13 @@ export class DesignHierarchyTreeProvider implements vscode.TreeDataProvider<Desi
 			}
 			//console.log(`Request open ${rec.file}`);
 			ret.fileUri = fileUri;
-			//ret.command = { command: "vscode.open", title: "open", arguments: [fileUri] };
-			ret.command = { command: "diplomat-host.select-hierarchy", title: "Select hierarchy", arguments: [ret] };
 		}
+		if (rec.instanceloc)
+		{
+			ret.refPosition = rec.instanceloc;
+		}
+		
+		ret.command = { command: "diplomat-host.select-hierarchy", title: "Select hierarchy", arguments: [ret] };
 		if(rec.childs) {
 			for(let subrec of rec.childs) {
 				this.elementFromRecord(subrec,ret);

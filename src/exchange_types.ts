@@ -96,7 +96,8 @@ export type HierarchyRecord =  {
   def: boolean,
   name: string,
   module: string,
-  file?: string
+  file?: string,
+  instanceloc ?: lsp.TextDocumentPositionParams
 }
 
 export type SignalData = {

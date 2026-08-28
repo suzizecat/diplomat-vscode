@@ -59,6 +59,8 @@ export class FeatureDiplomatLSPClient extends BaseFeature {
             documentSelector: [
                 { scheme: "file", language: "systemverilog" },
                 { scheme: "untitled", language: "systemverilog" },
+                { scheme: "file", language: "verilog" },
+                { scheme: "untitled", language: "verilog" },
             ],
             outputChannelName: "[diplomat] Server",
             outputChannel: lsp_logger

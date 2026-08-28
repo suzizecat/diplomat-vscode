@@ -1,10 +1,8 @@
-name: SystemVerilog
-scopeName: source.systemverilog
+name: Verilog
+scopeName: source.verilog
 fileTypes:
-  - vh
-  - sv
-  - svi
-  - svh
+  - v
+  - V
 patterns:
   - include: '#comments'
   - include: '#strings'

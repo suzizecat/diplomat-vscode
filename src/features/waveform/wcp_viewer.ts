@@ -122,7 +122,7 @@ class _WCPEvents {
 		})
 	}
 
-	protected async _send_data(data : string) : Promise<types.Response | types.Error>
+	protected async _send_data(data : string) : Promise<types.Response | types.Event| types.Error>
 	{
 		if(!data.endsWith("\n"))
 			data += "\n";
@@ -135,7 +135,7 @@ class _WCPEvents {
 				await wait_for_write;
         }
 		
-		let prom = new Promise<types.Response | types.Error>((resolve) => {
+		let prom = new Promise<types.Response | types.Event | types.Error>((resolve) => {
 			this.rd_promise_subscription = this.on_message_received(resolve,this);
 		})
 
@@ -156,7 +156,7 @@ class _WCPEvents {
 		await this._send_data(greeting.toString())
 	}
  
-	public async send_base_command(command_name : string, args : any) : Promise<types.Response | types.Error>
+	public async send_base_command(command_name : string, args : any) : Promise<types.Response | types.Event | types.Error>
 	{
 		const built_command = Object.assign({type : "command", command : command_name},args);
 		return this._send_data(JSON.stringify(built_command))

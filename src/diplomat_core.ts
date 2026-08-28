@@ -17,16 +17,17 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { commands} from 'vscode';
+import * as vscode from 'vscode';
 import { ExtensionEnvironment } from './features/base_feature';
 import { FeatureDiplomatLSPClient } from './features/feat_lsp_client';
-import { ContextVar, get_workspace_base_uri, vscode_in_debug_mode } from './utils';
+import { ContextVar, HierClickMode, get_workspace_base_uri, vscode_in_debug_mode } from './utils';
 import { FeatureWaveformViewer } from './features/feat_waveform_viewer';
 import { FeatureProjectManagement } from './features/feat_prj_management';
 import { FeatureEditor } from './features/feat_editor';
 import { FeatureHierarchyManagement } from './features/feat_hierarchy';
 import { FeatureTestController } from './features/feat_test_controller';
 import { FeatureDebug } from './features/feat_debug';
+import { DesignElement } from './gui/designExplorerPanel';
 
 
 
@@ -45,12 +46,14 @@ export class DiplomatExtension {
     protected _feat_test: FeatureTestController;
     protected _feat_debug: FeatureDebug;
 
+    protected _last_hier_sel_path : string = "";
+
     readonly logger = this._extension_environment.logger;
 
     public constructor(protected _extension_environment : ExtensionEnvironment)
     {
-        commands.executeCommand('setContext', ContextVar.DiplomatEnabled, true);
-        commands.executeCommand('setContext', ContextVar.DebugEnabled, vscode_in_debug_mode());
+        vscode.commands.executeCommand('setContext', ContextVar.DiplomatEnabled, true);
+        vscode.commands.executeCommand('setContext', ContextVar.DebugEnabled, vscode_in_debug_mode());
         
         this._feat_lsp = new FeatureDiplomatLSPClient(this._extension_environment);
         this._feat_waveform = new FeatureWaveformViewer(this._extension_environment);
@@ -66,7 +69,7 @@ export class DiplomatExtension {
 
     protected _bind_events()
     {
-        this._feat_hier.on_elt_select(this._feat_waveform.set_design_location, this._feat_waveform);
+        this._feat_hier.on_elt_select(this._h_hier_select,this);
 
         this._feat_project.on_config_loaded(this._feat_hier.refresh,this._feat_hier);
 
@@ -77,7 +80,7 @@ export class DiplomatExtension {
      * start
      */
     public async start() {
-
+        
         await this._feat_lsp.start();
         await this._feat_project.start();
         this.logger?.info(`Diplomat started in workspace ${get_workspace_base_uri()?.fsPath}`);
@@ -86,8 +89,64 @@ export class DiplomatExtension {
     public stop()
     {
         this.logger?.info("Diplomat is being disabled. Bye !");
-        commands.executeCommand("setContext", ContextVar.DiplomatEnabled, false);
+        vscode.commands.executeCommand("setContext", ContextVar.DiplomatEnabled, false);
     }
+
+    protected async _h_hier_select(elt : DesignElement)
+    {
+        this.logger?.error(`Hierarchy go to ${elt.hierPath}`);
+
+        let actual_mode = this._feat_hier.click_mode;
+
+        if(actual_mode == HierClickMode.Alternate)
+        {
+            if( this._last_hier_sel_path == elt.hierPath )
+            {
+                this._last_hier_sel_path = "";
+                actual_mode =   HierClickMode.Definition;
+                if (! elt.fileUri && elt.parent?.fileUri)
+                {
+                    actual_mode = HierClickMode.Reference;
+                }
+            }
+            else 
+            {
+                this._last_hier_sel_path = elt.hierPath;
+                actual_mode = HierClickMode.Reference;
+                if (! elt.parent?.fileUri && elt.fileUri)
+                {
+                    actual_mode = HierClickMode.Reference;
+                }
+            }
+        }
+
+        if(actual_mode == HierClickMode.Definition)
+        {            
+            if(elt.fileUri)
+                await this._feat_waveform.set_design_location(elt);
+        }
+        else
+        {
+            
+            if(elt?.parent?.fileUri)
+            {
+                await this._feat_waveform.set_design_location(elt.parent);
+
+                if(!vscode.window.activeTextEditor)
+                    this.logger?.error(`No active editor after call to set design location`)
+                else if (elt.refPosition)
+                {
+                    const p = elt.refPosition.position;
+                    vscode.window.activeTextEditor.revealRange(
+                        new vscode.Range(new vscode.Position(p.line,p.character),new vscode.Position(p.line,p.character)),
+                        vscode.TextEditorRevealType.AtTop
+                    );
+                }
+            }
+        }
+    }
+
+
 
     public dispose()
     {

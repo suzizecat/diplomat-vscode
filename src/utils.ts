@@ -53,8 +53,18 @@ export function vscode_in_debug_mode() : boolean {
 
 export enum ContextVar {
     DiplomatEnabled = "diplomat-host:enabled",
-    DebugEnabled = "diplomat-host:in-debug"
+    DebugEnabled = "diplomat-host:in-debug",
+    HierClickMode = "diplomat-host:hierClickMode"
+
 };
+
+export enum HierClickMode {
+    Alternate = "alternate",
+    Reference = "ref",
+    Definition = "def"
+
+};
+
 
 
 export async function reveal_file(file : vscode.Uri, pos ?: vscode.Location | lsp.Range | vscode.Range)

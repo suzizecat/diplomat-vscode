@@ -19,7 +19,7 @@
 
 import { Socket } from "net";
 import { commands, EventEmitter, ExtensionContext, window, workspace } from "vscode";
-import { InitializeResult, integer, LanguageClientOptions } from "vscode-languageclient";
+import { InitializeResult, integer, LanguageClientOptions, ProgressType } from "vscode-languageclient";
 import { LanguageClient, ServerOptions } from "vscode-languageclient/node";
 
 import {BaseFeature, ExtensionEnvironment} from "./base_feature";
@@ -65,6 +65,9 @@ export class FeatureDiplomatLSPClient extends BaseFeature {
             outputChannelName: "[diplomat] Server",
             outputChannel: lsp_logger
         };
+
+        // Check https://github.com/copilot/share/403b0316-43a4-80e7-a841-a4484044000b for custom implementations of status bar progress ideas.
+        
     }
 
 

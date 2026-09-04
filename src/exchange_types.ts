@@ -91,14 +91,21 @@ export type WaveformViewerCbArgs = {
   args: Array<any>
 };
 
+export enum HierarchyKind {
+  Interface = "interface",
+  Module = "module",
+  Program = "program"
+};
+
 export type HierarchyRecord =  {
   childs?: HierarchyRecord[],
   def: boolean,
   name: string,
   module: string,
+  kind ?: HierarchyKind,
   file?: string,
   instanceloc ?: lsp.TextDocumentPositionParams
-}
+};
 
 export type SignalData = {
   sig: string,

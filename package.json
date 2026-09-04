@@ -78,6 +78,11 @@
           "when": "view == design-hierarchy && diplomat-host:hierClickMode == 'def'"
         },
         {
+          "submenu": "diplomat-host.gui.hier-show",
+          "group": "navigation@1",
+          "when": "view == design-hierarchy"
+        },
+        {
           "command": "diplomat-host.waves.enable-follow",
           "when": "view == design-hierarchy && diplomat-host:viewerCanFollowSignal && !diplomat-host:followWaveSelection",
           "group": "navigation@2"
@@ -198,8 +203,33 @@
           "command": "diplomat-host.gui.hier-mode.def_to_alt",
           "when": "never"
         }
+      ],
+      "diplomat-host.gui.hier-show" : [
+        {
+        "command": "diplomat-host.gui.hier-view.modules.on",
+        "when" : "diplomat-host:hierViewModeModulesOn"
+        },
+        {
+        "command": "diplomat-host.gui.hier-view.modules.off",
+        "when" : "! diplomat-host:hierViewModeModulesOn"
+        },
+        {
+        "command": "diplomat-host.gui.hier-view.interface.on",
+        "when" : "diplomat-host:hierViewModeInterfaceOn"
+        },
+        {
+        "command": "diplomat-host.gui.hier-view.interface.off",
+        "when" : "! diplomat-host:hierViewModeInterfaceOn"
+        }
       ]
     },
+    "submenus": [
+      {
+        "id": "diplomat-host.gui.hier-show",
+        "icon" : "$(layers)",
+        "label": "Show"
+      }
+    ],
     "commands": [
       
       {
